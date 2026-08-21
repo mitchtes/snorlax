@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Snorlax TCG Master Gallery</title>
+  <title>Snorlax Unique Physical TCG Gallery</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -14,7 +14,7 @@
     }
     h1 {
       text-align: center;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
     }
     p.subtitle {
       text-align: center;
@@ -34,7 +34,7 @@
       padding: 12px;
       text-align: center;
       border: 1px solid #2a2a2a;
-      transition: transform 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+      transition: transform 0.2s ease, border-color 0.2s ease;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -57,10 +57,15 @@
       margin-top: 10px;
       color: #efefef;
     }
-    .card-id {
+    .card-artist {
       font-size: 12px;
-      color: #aaa;
+      color: #ffd700;
       margin-top: 4px;
+    }
+    .card-id {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
     }
     .owned-label {
       margin-top: 10px;
@@ -89,15 +94,14 @@
 </head>
 <body>
 
-  <h1>Snorlax Card Gallery</h1>
-  <p class="subtitle">Fetching all visual card variations...</p>
+  <h1>Snorlax Physical Card Gallery</h1>
+  <p class="subtitle" id="count-text">Deduplicating cards by unique artwork & illustrator...</p>
 
   <div id="gallery" class="grid">
-    <div class="status" id="status-text">Loading Snorlax cards from TCGDex...</div>
+    <div class="status" id="status-text">Filtering unique physical illustrations...</div>
   </div>
 
   <script>
-    // Load saved ownership states from local storage
     const ownedCards = JSON.parse(localStorage.getItem('snorlax_owned_cards') || '{}');
 
     function toggleOwned(cardId, isChecked, cardElement) {
@@ -110,57 +114,67 @@
       }
     }
 
-    async function fetchSnorlaxCards() {
+    async function fetchStrictlyUniqueSnorlax() {
       const gallery = document.getElementById('gallery');
       const statusText = document.getElementById('status-text');
+      const countText = document.getElementById('count-text');
 
       try {
         const response = await fetch('https://api.tcgdex.net/v2/en/cards?name=Snorlax');
-        if (!response.ok) throw new Error('API network response was not ok');
+        if (!response.ok) throw new Error('API request failed');
         
         const cards = await response.json();
-
-        if (!cards || cards.length === 0) {
-          statusText.innerText = 'No Snorlax cards found.';
-          return;
-        }
-
         statusText.remove();
 
-        cards.forEach(card => {
+        const seenIllustrations = new Set();
+        let uniqueCount = 0;
+
+        for (const card of cards) {
+          // Ignore Pocket / digital-only set IDs
+          if (card.id.startsWith('P-A-') || card.id.includes('pocket')) continue;
+
           if (card.image) {
-            const cardElement = document.createElement('div');
-            const isOwned = !!ownedCards[card.id];
-            cardElement.className = `card ${isOwned ? 'owned' : ''}`;
+            // Strip set specifics to isolate unique artwork path
+            const artIdentifier = card.image.replace(/https:\/\/assets\.tcgdex\.net\/en\/[^\/]+\/[^\/]+\//, '');
 
-            // P-A-049 and special promo fixes
-            const webpUrl = `${card.image}/high.webp`;
-            const pngUrl = `${card.image}/high.png`;
-            const fallbackUrl = `${card.image}.png`;
+            if (!seenIllustrations.has(artIdentifier)) {
+              seenIllustrations.add(artIdentifier);
+              uniqueCount++;
 
-            cardElement.innerHTML = `
-              <img src="${webpUrl}" 
-                   alt="${card.name}" 
-                   loading="lazy" 
-                   onerror="if(this.src!=='${pngUrl}'){this.src='${pngUrl}';}else{this.src='${fallbackUrl}';}">
-              <div class="card-name">${card.name}</div>
-              <div class="card-id">${card.id}</div>
-              <label class="owned-label">
-                <input type="checkbox" ${isOwned ? 'checked' : ''} onchange="toggleOwned('${card.id}', this.checked, this.closest('.card'))">
-                Owned
-              </label>
-            `;
-            gallery.appendChild(cardElement);
+              const isOwned = !!ownedCards[card.id];
+              const cardElement = document.createElement('div');
+              cardElement.className = `card ${isOwned ? 'owned' : ''}`;
+
+              const webpUrl = `${card.image}/high.webp`;
+              const pngUrl = `${card.image}/high.png`;
+
+              cardElement.innerHTML = `
+                <img src="${webpUrl}" 
+                     alt="${card.name}" 
+                     loading="lazy" 
+                     onerror="if(this.src!=='${pngUrl}'){this.src='${pngUrl}';}">
+                <div class="card-name">${card.name}</div>
+                <div class="card-artist">Art: ${card.illustrator || 'Official Illustration'}</div>
+                <div class="card-id">${card.id}</div>
+                <label class="owned-label">
+                  <input type="checkbox" ${isOwned ? 'checked' : ''} onchange="toggleOwned('${card.id}', this.checked, this.closest('.card'))">
+                  Owned
+                </label>
+              `;
+              gallery.appendChild(cardElement);
+            }
           }
-        });
+        }
+
+        countText.innerText = `Showing ${uniqueCount} unique physical Snorlax card illustrations.`;
 
       } catch (error) {
-        console.error('Error fetching cards:', error);
-        statusText.innerText = 'Failed to load card images. Check your internet connection or ad blocker settings.';
+        console.error('Error:', error);
+        statusText.innerText = 'Failed to load card artwork.';
       }
     }
 
-    fetchSnorlaxCards();
+    fetchStrictlyUniqueSnorlax();
   </script>
 
 </body>
