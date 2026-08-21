@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Snorlax Collector's Gallery & Price Tracker</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --accent-yellow: #f59e0b;
+            --accent-green: #10b981;
+            --accent-blue: #38bdf8;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 12px;
+        }
+
+        header {
+            text-align: center;
+            max-width: 1000px;
+            margin: 0 auto 20px auto;
+            padding: 16px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            color: var(--accent-yellow);
+            margin: 0 0 6px 0;
+            font-size: 1.8rem;
+        }
+
+        p.subtitle {
+            color: var(--text-sub);
+            margin: 0 0 16px 0;
+            font-size: 0.95rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        input[type="text"], select, button {
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-size: 0.9rem;
+            width: 100%;
+            max-width: 260px;
+        }
+
+        button.btn-action {
+            background-color: var(--border-color);
+            color: var(--accent-blue);
+            font-weight: 600;
+            cursor: pointer;
+            width: auto;
+            max-width: none;
+        }
+
+        button.btn-action:hover {
+            background-color: var(--accent-blue);
+            color: #000;
+        }
+
+        .stats-bar {
+            font-weight: 600;
+            color: var(--accent-blue);
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .stats-pill {
+            background-color: rgba(56, 189, 248, 0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .card-item {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .card-item.is-first {
+            border: 2px solid var(--accent-yellow);
+        }
+
+        .card-item.is-owned {
+            border: 2px solid var(--accent-green);
+        }
+
+        .badge-first {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            background-color: var(--accent-yellow);
+            color: #000;
+            font-weight: bold;
+            font-size: 0.7rem;
+            padding: 3px 6px;
+            border-radius: 4px;
+            z-index: 2;
+        }
+
+        .badge-owned {
+            position: absolute;
+            top: 18px;
+            left: 18px;
+            background-color: var(--accent-green);
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.7rem;
+            padding: 3px 6px;
+            border-radius: 4px;
+            z-index: 2;
+        }
+
+        .img-container {
+            width: 100%;
+            height: 320px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.25);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .img-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.85rem;
+        }
+
+        .card-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+        }
+
+        .card-meta {
+            color: var(--text-sub);
+        }
+
+        .price-badge-live {
+            margin-top: 6px;
+            padding: 8px;
+            background-color: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--accent-green);
+            border-radius: 6px;
+            color: #6ee7b7;
+            font-weight: bold;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .owner-control {
+            margin-top: 8px;
+            padding: 10px;
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: var(--accent-green);
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .owner-control input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            accent-color: var(--accent-green);
+        }
+
+        .price-buttons {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+        }
+
+        .price-btn {
+            flex: 1;
+            padding: 6px 2px;
+            font-size: 0.7rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            text-decoration: none;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .art-description {
+            padding: 6px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: var(--accent-blue);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Snorlax Collector & API Pricing</h1>
+    <p class="subtitle">Live market pricing, price sorting, and mobile touch checklist</p>
+    
+    <div class="controls">
+        <input type="text" id="searchInput" placeholder="Search set, card #, description..." oninput="filterCards()">
+        
+        <select id="artFilter" onchange="filterCards()">
+            <option value="all">All Cards (254)</option>
+            <option value="unique-only">First Instance of Unique Art (77)</option>
+            <option value="owned">Cards You Own</option>
+            <option value="unowned">Cards You Don't Own</option>
+            <option value="unique-needed">Unique Artworks Still Needed</option>
+        </select>
+
+        <select id="sortFilter" onchange="filterCards()">
+            <option value="row-asc">Sort: Default Row Order</option>
+            <option value="price-desc">Sort: Price (High to Low)</option>
+            <option value="price-asc">Sort: Price (Low to High)</option>
+        </select>
+
+        <select id="langFilter" onchange="filterCards()">
+            <option value="all">All Languages</option>
+            <option value="Japanese">Japanese</option>
+            <option value="English">English</option>
+            <option value="Chinese">Chinese</option>
+        </select>
+
+        <button class="btn-action" onclick="exportData()">Export Backup</button>
+        <button class="btn-action" onclick="fetchLivePrices()">Sync Live Prices</button>
+    </div>
+
+    <div class="stats-bar">
+        <span class="stats-pill" id="totalCountPill">Showing: 254</span>
+        <span class="stats-pill" id="ownedCountPill">Owned: 0 / 254</span>
+        <span class="stats-pill" id="artProgressPill">Unique Art Owned: 0 / 77</span>
+        <span class="stats-pill" id="valPill">Collection Value: $0.00</span>
+    </div>
+</header>
+
+<main class="gallery-grid" id="galleryGrid"></main>
+
+<script>
+    const rawCards = [
+      {"row": 2, "name": "Snorlax", "set": "Pokémon Jungle", "number": "47", "variant": "Holo", "lang": "Japanese", "groupId": 1, "artDesc": "Classic sitting, smiling Snorlax"},
+      {"row": 3, "name": "Hungry Snorlax", "set": "Unnumbered Promos", "number": "28", "variant": "Cosmos Holo", "lang": "Japanese", "groupId": 2, "artDesc": "Hungry Snorlax reaching for food"},
+      {"row": 4, "name": "Snorlax", "set": "Vending Machine Expansion Sheet 1: Blue", "number": "34", "variant": "Glossy", "lang": "Japanese", "groupId": 3, "artDesc": "Sleeping peacefully on grass"},
+      {"row": 5, "name": "Snorlax", "set": "Vending Machine Expansion Sheet 1: Blue", "number": "34", "variant": "Quick Starter Gift Set", "lang": "Japanese", "groupId": 3, "artDesc": "Sleeping peacefully on grass"},
+      {"row": 6, "name": "Snorlax", "set": "Jungle", "number": "011/064", "variant": "1st Edition", "lang": "English", "groupId": 1, "artDesc": "Classic sitting, smiling Snorlax"},
+      {"row": 7, "name": "Snorlax", "set": "Jungle", "number": "011/064", "variant": "Holo", "lang": "English", "groupId": 1, "artDesc": "Classic sitting, smiling Snorlax"},
+      {"row": 8, "name": "Snorlax", "set": "Jungle", "number": "011/064", "variant": "No Symbol", "lang": "English", "groupId": 1, "artDesc": "Classic sitting, smiling Snorlax"},
+      {"row": 9, "name": "Snorlax", "set": "Jungle", "number": "027/064", "variant": "1st Edition", "lang": "English", "groupId": 1, "artDesc": "Classic sitting, smiling Snorlax"},
+      {"row": 10, "name": "Snorlax", "set": "Jungle", "number": "027/064", "variant": "Standard", "lang": "English", "groupId": 1, "artDesc": "Classic sitting, smiling Snorlax"},
+      {"row": 11, "name": "Snorlax", "set": "Jungle", "number": "027/064", "variant": "Yellow Highlight Error", "lang": "English", "groupId": 1, "artDesc": "Classic sitting, smiling Snorlax"},
+      {"row": 12, "name": "Rocket's Snorlax", "set": "Challenge from the Darkness", "number": "73", "variant": "Standard", "lang": "Japanese", "groupId": 4, "artDesc": "Looking angry beside Team Rocket"},
+      {"row": 13, "name": "Snorlax", "set": "Base Set 2", "number": "030/130", "variant": "Standard", "lang": "English", "groupId": 1, "artDesc": "Classic sitting, smiling Snorlax"},
+      {"row": 14, "name": "Rocket's Snorlax", "set": "Gym Heroes", "number": "033/132", "variant": "1st Edition", "lang": "English", "groupId": 4, "artDesc": "Looking angry beside Team Rocket"},
+      {"row": 15, "name": "Rocket's Snorlax", "set": "Gym Heroes", "number": "033/132", "variant": "Standard", "lang": "English", "groupId": 4, "artDesc": "Looking angry beside Team Rocket"},
+      {"row": 16, "name": "Snorlax", "set": "Legendary Collection", "number": "064/110", "variant": "Standard", "lang": "English", "groupId": 1, "artDesc": "Classic sitting, smiling Snorlax"},
+      {"row": 17, "name": "Snorlax", "set": "Legendary Collection", "number": "064/110", "variant": "Reverse Holo", "lang": "English", "groupId": 1, "artDesc": "Classic sitting, smiling Snorlax"},
+      {"row": 18, "name": "Snorlax", "set": "Wizards Promos", "number": "49", "variant": "Standard", "lang": "English", "groupId": 5, "artDesc": "Lying flat on its back"},
+      {"row": 19, "name": "Snorlax", "set": "Mysterious Mountains", "number": "62", "variant": "1st Edition", "lang": "Japanese", "groupId": 6, "artDesc": "Standing in misty forest clearing"},
+      {"row": 20, "name": "Snorlax", "set": "Mysterious Mountains", "number": "62", "variant": "Standard", "lang": "Japanese", "groupId": 6, "artDesc": "Standing in misty forest clearing"},
+      {"row": 21, "name": "Snorlax", "set": "Skyridge", "number": "100/144", "variant": "Standard", "lang": "English", "groupId": 6, "artDesc": "Standing in misty forest clearing"},
+      {"row": 22, "name": "Snorlax", "set": "Skyridge", "number": "100/144", "variant": "Reverse Holo", "lang": "English", "groupId": 6, "artDesc": "Standing in misty forest clearing"},
+      {"row": 23, "name": "Snorlax", "set": "Flight of Legends", "number": "74", "variant": "1st Edition", "lang": "Japanese", "groupId": 7, "artDesc": "Sleeping soundly under large tree"},
+      {"row": 24, "name": "Snorlax", "set": "Flight of Legends", "number": "74", "variant": "Standard", "lang": "Japanese", "groupId": 7, "artDesc": "Sleeping soundly under large tree"},
+      {"row": 25, "name": "Snorlax", "set": "EX FireRed & LeafGreen", "number": "015/112", "variant": "Standard", "lang": "English", "groupId": 7, "artDesc": "Sleeping soundly under large tree"},
+      {"row": 26, "name": "Snorlax", "set": "EX FireRed & LeafGreen", "number": "015/112", "variant": "Reverse Holo", "lang": "English", "groupId": 7, "artDesc": "Sleeping soundly under large tree"},
+      {"row": 27, "name": "Rocket's Snorlax ex", "set": "Rocket Gang Strikes Back", "number": "62", "variant": "1st Edition", "lang": "Japanese", "groupId": 8, "artDesc": "Fiery aura in dark background"},
+      {"row": 28, "name": "Rocket's Snorlax ex", "set": "Rocket Gang Strikes Back", "number": "62", "variant": "Unlimited", "lang": "Japanese", "groupId": 8, "artDesc": "Fiery aura in dark background"},
+      {"row": 29, "name": "Rocket's Snorlax ex", "set": "EX Team Rocket Returns", "number": "104/109", "variant": "Holo", "lang": "English", "groupId": 8, "artDesc": "Fiery aura in dark background"},
+      {"row": 30, "name": "Snorlax δ", "set": "Offense and Defense of the Furthest Ends", "number": "1", "variant": "1st Edition", "lang": "Japanese", "groupId": 9, "artDesc": "Delta species with metallic outline"},
+      {"row": 31, "name": "Snorlax δ", "set": "Offense and Defense of the Furthest Ends", "number": "1", "variant": "Unlimited", "lang": "Japanese", "groupId": 9, "artDesc": "Delta species with metallic outline"},
+      {"row": 32, "name": "Snorlax δ", "set": "EX Dragon Frontiers", "number": "010/101", "variant": "Standard", "lang": "English", "groupId": 9, "artDesc": "Delta species with metallic outline"},
+      {"row": 33, "name": "Snorlax δ", "set": "EX Dragon Frontiers", "number": "010/101", "variant": "Reverse Holo", "lang": "English", "groupId": 9, "artDesc": "Delta species with metallic outline"},
+      {"row": 34, "name": "Snorlax", "set": "Space-Time Creation", "number": "94", "variant": "1st Edition", "lang": "Japanese", "groupId": 10, "artDesc": "Sitting up, looking directly forward"},
+      {"row": 35, "name": "Snorlax", "set": "Space-Time Creation", "number": "94", "variant": "Unlimited", "lang": "Japanese", "groupId": 10, "artDesc": "Sitting up, looking directly forward"},
+      {"row": 36, "name": "Snorlax", "set": "Diamond & Pearl", "number": "037/130", "variant": "Standard", "lang": "English", "groupId": 10, "artDesc": "Sitting up, looking directly forward"},
+      {"row": 37, "name": "Snorlax", "set": "Diamond & Pearl", "number": "037/130", "variant": "Reverse Holo", "lang": "English", "groupId": 10, "artDesc": "Sitting up, looking directly forward"},
+      {"row": 38, "name": "Snorlax", "set": "Diamond & Pearl Promos", "number": "126/DP-P", "variant": "Domino’s Pizza", "lang": "Japanese", "groupId": 11, "artDesc": "Waving cheerfully holding pizza box"},
+      {"row": 39, "name": "Snorlax LV.X", "set": "Diamond & Pearl Promos", "number": "127/DP-P", "variant": "Domino’s Pizza", "lang": "Japanese", "groupId": 12, "artDesc": "LV.X bursting out of frame"},
+      {"row": 40, "name": "Snorlax", "set": "Bonds to the End of Time", "number": "070/090", "variant": "1st Edition", "lang": "Japanese", "groupId": 13, "artDesc": "Yawning widely, stretching its arms"},
+      {"row": 41, "name": "Snorlax", "set": "Bonds to the End of Time", "number": "070/090", "variant": "Unlimited", "lang": "Japanese", "groupId": 13, "artDesc": "Yawning widely, stretching its arms"},
+      {"row": 42, "name": "Snorlax", "set": "Rising Rivals", "number": "033/111", "variant": "Standard", "lang": "English", "groupId": 13, "artDesc": "Yawning widely, stretching its arms"},
+      {"row": 43, "name": "Snorlax", "set": "Rising Rivals", "number": "033/111", "variant": "Reverse Holo", "lang": "English", "groupId": 13, "artDesc": "Yawning widely, stretching its arms"},
+      {"row": 44, "name": "Snorlax", "set": "Rising Rivals", "number": "081/111", "variant": "Reverse Holo", "lang": "English", "groupId": 14, "artDesc": "Scratching belly while sitting down"},
+      {"row": 45, "name": "Snorlax", "set": "Rising Rivals", "number": "081/111", "variant": "Standard", "lang": "English", "groupId": 14, "artDesc": "Scratching belly while sitting down"},
+      {"row": 46, "name": "Snorlax LV.X", "set": "Rising Rivals", "number": "111/111", "variant": "Holo", "lang": "English", "groupId": 12, "artDesc": "LV.X bursting out of frame"},
+      {"row": 47, "name": "Snorlax", "set": "Lost Link", "number": "28", "variant": "Holo", "lang": "Japanese", "groupId": 15, "artDesc": "Napping on a sunny hill"},
+      {"row": 48, "name": "Snorlax", "set": "Black & White Promos", "number": "207/BW-P", "variant": "CoroCoro Ichiban!", "lang": "Japanese", "groupId": 16, "artDesc": "Dancing with arms in air"},
+      {"row": 49, "name": "Snorlax", "set": "Call of Legends", "number": "033/095", "variant": "Standard", "lang": "English", "groupId": 15, "artDesc": "Napping on a sunny hill"},
+      {"row": 50, "name": "Snorlax", "set": "Call of Legends", "number": "033/095", "variant": "Reverse Holo", "lang": "English", "groupId": 15, "artDesc": "Napping on a sunny hill"},
+      {"row": 51, "name": "Snorlax", "set": "Call of Legends", "number": "033/095", "variant": "Play! Pokémon Stamp", "lang": "English", "groupId": 15, "artDesc": "Napping on a sunny hill"},
+      {"row": 52, "name": "Snorlax", "set": "Call of Legends", "number": "033/095", "variant": "Play! Pokémon Stamp Winner", "lang": "English", "groupId": 15, "artDesc": "Napping on a sunny hill"},
+      {"row": 53, "name": "Snorlax", "set": "National Beginning Set", "number": "27", "variant": "Standard", "lang": "Japanese", "groupId": 17, "artDesc": "Stomping forward with heavy impact"},
+      {"row": 54, "name": "Snorlax", "set": "Plasma Gale", "number": "55", "variant": "1st Edition", "lang": "Japanese", "groupId": 18, "artDesc": "Team Plasma border, aura glow"},
+      {"row": 55, "name": "Snorlax", "set": "Plasma Gale", "number": "55", "variant": "Unlimited", "lang": "Japanese", "groupId": 18, "artDesc": "Team Plasma border, aura glow"},
+      {"row": 56, "name": "Snorlax", "set": "Boundaries Crossed", "number": "109/149", "variant": "Standard", "lang": "English", "groupId": 17, "artDesc": "Stomping forward with heavy impact"},
+      {"row": 57, "name": "Snorlax", "set": "Boundaries Crossed", "number": "109/149", "variant": "Reverse Holo", "lang": "English", "groupId": 17, "artDesc": "Stomping forward with heavy impact"},
+      {"row": 58, "name": "Snorlax", "set": "Plasma Storm", "number": "101/135", "variant": "Standard", "lang": "English", "groupId": 18, "artDesc": "Team Plasma border, aura glow"},
+      {"row": 59, "name": "Snorlax", "set": "Plasma Storm", "number": "101/135", "variant": "Reverse Holo", "lang": "English", "groupId": 18, "artDesc": "Team Plasma border, aura glow"},
+      {"row": 60, "name": "Snorlax", "set": "Kalos Starter Set", "number": "026/039", "variant": "Standard", "lang": "English", "groupId": 19, "artDesc": "Sleeping on cobblestone town road"},
+      {"row": 61, "name": "Snorlax", "set": "XY Beginning Set", "number": "26", "variant": "Standard", "lang": "Japanese", "groupId": 19, "artDesc": "Sleeping on cobblestone town road"},
+      {"row": 62, "name": "Snorlax", "set": "Wild Blaze", "number": "66", "variant": "1st Edition", "lang": "Japanese", "groupId": 19, "artDesc": "Sleeping on cobblestone town road"},
+      {"row": 63, "name": "Snorlax", "set": "Wild Blaze", "number": "66", "variant": "Unlimited", "lang": "Japanese", "groupId": 19, "artDesc": "Sleeping on cobblestone town road"},
+      {"row": 64, "name": "Snorlax", "set": "Flashfire", "number": "080/106", "variant": "Standard", "lang": "English", "groupId": 19, "artDesc": "Sleeping on cobblestone town road"},
+      {"row": 65, "name": "Snorlax", "set": "Flashfire", "number": "080/106", "variant": "Reverse Holo", "lang": "English", "groupId": 19, "artDesc": "Sleeping on cobblestone town road"},
+      {"row": 66, "name": "Snorlax", "set": "Flashfire", "number": "80", "variant": "Holo", "lang": "English", "groupId": 19, "artDesc": "Sleeping on cobblestone town road"},
+      {"row": 67, "name": "Snorlax", "set": "XY Promos", "number": "149", "variant": "Marumiya", "lang": "Japanese", "groupId": 20, "artDesc": "Relaxing with various forest Pokémon"},
+      {"row": 68, "name": "Snorlax", "set": "BREAKthrough", "number": "118/162", "variant": "Standard", "lang": "English", "groupId": 21, "artDesc": "Lying down blocking forest pathway"},
+      {"row": 69, "name": "Snorlax", "set": "BREAKthrough", "number": "118/162", "variant": "Reverse Holo", "lang": "English", "groupId": 21, "artDesc": "Lying down blocking forest pathway"},
+      {"row": 70, "name": "Snorlax", "set": "Generations", "number": "058/083", "variant": "Standard", "lang": "English", "groupId": 21, "artDesc": "Lying down blocking forest pathway"},
+      {"row": 71, "name": "Snorlax", "set": "Generations", "number": "058/083", "variant": "Reverse Holo", "lang": "English", "groupId": 21, "artDesc": "Lying down blocking forest pathway"},
+      {"row": 72, "name": "Snorlax", "set": "BREAK Starter Pack", "number": "47", "variant": "Holo", "lang": "Japanese", "groupId": 21, "artDesc": "Lying down blocking forest pathway"},
+      {"row": 73, "name": "Snorlax", "set": "Awakening Psychic King", "number": "57", "variant": "1st Edition", "lang": "Japanese", "groupId": 21, "artDesc": "Lying down blocking forest pathway"},
+      {"row": 74, "name": "Snorlax", "set": "Awakening Psychic King", "number": "57", "variant": "Unlimited", "lang": "Japanese", "groupId": 21, "artDesc": "Lying down blocking forest pathway"},
+      {"row": 75, "name": "Snorlax", "set": "Fates Collide", "number": "077/124", "variant": "Standard", "lang": "English", "groupId": 22, "artDesc": "Curled up asleep on meadow"},
+      {"row": 76, "name": "Snorlax", "set": "Fates Collide", "number": "077/124", "variant": "Reverse Holo", "lang": "English", "groupId": 22, "artDesc": "Curled up asleep on meadow"},
+      {"row": 77, "name": "Snorlax", "set": "XY Promos", "number": "261", "variant": "Daiichi Pan", "lang": "Japanese", "groupId": 23, "artDesc": "GX pose, charging energetic attack"},
+      {"row": 78, "name": "Snorlax GX", "set": "Sun & Moon Promos", "number": "001/SM-P", "variant": "Standard", "lang": "Japanese", "groupId": 23, "artDesc": "GX pose, charging energetic attack"},
+      {"row": 79, "name": "Snorlax GX", "set": "Sun & Moon Promos", "number": "SM05", "variant": "Holo", "lang": "English", "groupId": 23, "artDesc": "GX pose, charging energetic attack"},
+      {"row": 80, "name": "Snorlax GX", "set": "Sun & Moon Promos", "number": "SM05", "variant": "Jumbo", "lang": "English", "groupId": 23, "artDesc": "GX pose, charging energetic attack"},
+      {"row": 81, "name": "Snorlax", "set": "XY Promos", "number": "XY179", "variant": "Standard", "lang": "English", "groupId": 23, "artDesc": "GX pose, charging energetic attack"},
+      {"row": 82, "name": "Eevee & Snorlax GX", "set": "Sun & Moon Promos", "number": "297/SM-P", "variant": "Expansion Stamp", "lang": "Japanese", "groupId": 24, "artDesc": "Eevee riding high on Snorlax"},
+      {"row": 83, "name": "Eevee & Snorlax GX", "set": "Tag Bolt", "number": "066/095", "variant": "Holo", "lang": "Japanese", "groupId": 24, "artDesc": "Eevee riding high on Snorlax"},
+      {"row": 84, "name": "Eevee & Snorlax GX", "set": "Tag Bolt", "number": "106/095", "variant": "Holo", "lang": "Japanese", "groupId": 25, "artDesc": "Full art Eevee sitting on belly"},
+      {"row": 85, "name": "Eevee & Snorlax GX", "set": "Tag Bolt", "number": "115/095", "variant": "Holo", "lang": "Japanese", "groupId": 26, "artDesc": "Alt art, Eevee napping on head"},
+      {"row": 86, "name": "Eevee & Snorlax GX", "set": "Team Up", "number": "120/181", "variant": "Holo", "lang": "English", "groupId": 24, "artDesc": "Eevee riding high on Snorlax"},
+      {"row": 87, "name": "Eevee & Snorlax GX", "set": "Team Up", "number": "171/181", "variant": "Holo", "lang": "English", "groupId": 25, "artDesc": "Full art Eevee sitting on belly"},
+      {"row": 88, "name": "Eevee & Snorlax GX", "set": "Team Up", "number": "191/181", "variant": "Holo", "lang": "English", "groupId": 26, "artDesc": "Alt art, Eevee napping on head"},
+      {"row": 89, "name": "Snorlax", "set": "Double Blaze", "number": "76", "variant": "Holo", "lang": "Japanese", "groupId": 28, "artDesc": "Sitting under tree, eating berries"},
+      {"row": 90, "name": "Snorlax", "set": "Sun & Moon Family Pokémon Card Game", "number": "38", "variant": "Standard", "lang": "Japanese", "groupId": 29, "artDesc": "Cute simplified art sitting happily"},
+      {"row": 91, "name": "Eevee & Snorlax GX", "set": "Sun & Moon Promos", "number": "SM169", "variant": "Holo", "lang": "English", "groupId": 27, "artDesc": "Eevee and Snorlax high-fiving together"},
+      {"row": 92, "name": "Snorlax", "set": "Unbroken Bonds", "number": "158/214", "variant": "Standard", "lang": "English", "groupId": 28, "artDesc": "Sitting under tree, eating berries"},
+      {"row": 93, "name": "Snorlax", "set": "Unbroken Bonds", "number": "158/214", "variant": "Reverse Holo", "lang": "English", "groupId": 28, "artDesc": "Sitting under tree, eating berries"},
+      {"row": 94, "name": "Snorlax", "set": "Hidden Fates", "number": "050/068", "variant": "Standard", "lang": "English", "groupId": 30, "artDesc": "Yawning on colorful patterned background"},
+      {"row": 95, "name": "Snorlax", "set": "Hidden Fates", "number": "050/068", "variant": "Reverse Holo", "lang": "English", "groupId": 30, "artDesc": "Yawning on colorful patterned background"},
+      {"row": 96, "name": "Snorlax V", "set": "Shield", "number": "45", "variant": "Holo", "lang": "Japanese", "groupId": 31, "artDesc": "Snorlax V standing ready to fight"},
+      {"row": 97, "name": "Snorlax VMAX", "set": "Shield", "number": "46", "variant": "Holo", "lang": "Japanese", "groupId": 32, "artDesc": "Gigantamax Snorlax with park tree"},
+      {"row": 98, "name": "Snorlax V", "set": "Shield", "number": "66", "variant": "Holo", "lang": "Japanese", "groupId": 33, "artDesc": "Snorlax V full art textured pose"},
+      {"row": 99, "name": "Snorlax VMAX", "set": "Shield", "number": "70", "variant": "Holo", "lang": "Japanese", "groupId": 34, "artDesc": "Gigantamax Snorlax rainbow secret print"},
+      {"row": 100, "name": "Snorlax", "set": "V Starter Set: Grass", "number": "10", "variant": "Standard", "lang": "Japanese", "groupId": 35, "artDesc": "Munching happily on Oran berry"},
+      {"row": 101, "name": "Snorlax", "set": "V Starter Set: Grass", "number": "10", "variant": "Unlimited", "lang": "Japanese", "groupId": 35, "artDesc": "Munching happily on Oran berry"},
+      {"row": 102, "name": "Snorlax", "set": "Sword & Shield", "number": "140/202", "variant": "Standard", "lang": "English", "groupId": 35, "artDesc": "Munching happily on Oran berry"},
+      {"row": 103, "name": "Snorlax", "set": "Sword & Shield", "number": "140/202", "variant": "Reverse Holo", "lang": "English", "groupId": 35, "artDesc": "Munching happily on Oran berry"},
+      {"row": 104, "name": "Snorlax", "set": "Sword & Shield", "number": "140/202", "variant": "Cosmos Holo", "lang": "English", "groupId": 35, "artDesc": "Munching happily on Oran berry"},
+      {"row": 105, "name": "Snorlax V", "set": "Sword & Shield", "number": "141/202", "variant": "Holo", "lang": "English", "groupId": 31, "artDesc": "Snorlax V standing ready to fight"},
+      {"row": 106, "name": "Snorlax V", "set": "Sword & Shield", "number": "141/202", "variant": "Jumbo", "lang": "English", "groupId": 31, "artDesc": "Snorlax V standing ready to fight"},
+      {"row": 107, "name": "Snorlax VMAX", "set": "Sword & Shield", "number": "142/202", "variant": "Holo", "lang": "English", "groupId": 32, "artDesc": "Gigantamax Snorlax with park tree"},
+      {"row": 108, "name": "Snorlax VMAX", "set": "Sword & Shield", "number": "142/202", "variant": "Jumbo", "lang": "English", "groupId": 32, "artDesc": "Gigantamax Snorlax with park tree"},
+      {"row": 109, "name": "Snorlax V", "set": "Sword & Shield", "number": "197/202", "variant": "Holo", "lang": "English", "groupId": 33, "artDesc": "Snorlax V full art textured pose"},
+      {"row": 110, "name": "Snorlax VMAX", "set": "Sword & Shield", "number": "206/202", "variant": "Holo", "lang": "English", "groupId": 34, "artDesc": "Gigantamax Snorlax rainbow secret print"},
+      {"row": 111, "name": "Snorlax", "set": "Rebellion Clash", "number": "77", "variant": "Standard", "lang": "Japanese", "groupId": 36, "artDesc": "Lying on back, looking content"},
+      {"row": 112, "name": "Snorlax", "set": "Sword & Shield Promos", "number": "SWSH032", "variant": "Holo", "lang": "English", "groupId": 37, "artDesc": "Resting peacefully near flowers"},
+      {"row": 113, "name": "Snorlax", "set": "Rebel Clash", "number": "141/192", "variant": "Standard", "lang": "English", "groupId": 36, "artDesc": "Lying on back, looking content"},
+      {"row": 114, "name": "Snorlax", "set": "Rebel Clash", "number": "141/192", "variant": "Reverse Holo", "lang": "English", "groupId": 36, "artDesc": "Lying on back, looking content"},
+      {"row": 115, "name": "Snorlax", "set": "Rebel Clash", "number": "141/192", "variant": "Cosmos Holo", "lang": "English", "groupId": 36, "artDesc": "Lying on back, looking content"},
+      {"row": 116, "name": "Snorlax", "set": "Battle Academy 2020: Mewtwo Deck", "number": "9", "variant": "Standard", "lang": "English", "groupId": 36, "artDesc": "Lying on back, looking content"},
+      {"row": 117, "name": "Snorlax", "set": "Amazing Volt Tackle", "number": "084/100", "variant": "Holo", "lang": "Japanese", "groupId": 38, "artDesc": "Dynamic pose with electric sparks"},
+      {"row": 118, "name": "Snorlax", "set": "Sword & Shield Promos", "number": "SWSH068", "variant": "Build & Battle", "lang": "English", "groupId": 38, "artDesc": "Dynamic pose with electric sparks"},
+      {"row": 119, "name": "Snorlax", "set": "Sword & Shield Promos", "number": "SWSH068", "variant": "Staff", "lang": "English", "groupId": 38, "artDesc": "Dynamic pose with electric sparks"},
+      {"row": 120, "name": "Snorlax", "set": "Vivid Voltage", "number": "131/185", "variant": "Standard", "lang": "English", "groupId": 38, "artDesc": "Dynamic pose with electric sparks"},
+      {"row": 121, "name": "Snorlax", "set": "Vivid Voltage", "number": "131/185", "variant": "Reverse Holo", "lang": "English", "groupId": 38, "artDesc": "Dynamic pose with electric sparks"},
+      {"row": 122, "name": "Snorlax", "set": "Vivid Voltage", "number": "131/185", "variant": "Holo", "lang": "English", "groupId": 38, "artDesc": "Dynamic pose with electric sparks"},
+      {"row": 123, "name": "Snorlax", "set": "Vivid Voltage", "number": "131/185", "variant": "Theme Deck Holo", "lang": "English", "groupId": 38, "artDesc": "Dynamic pose with electric sparks"},
+      {"row": 124, "name": "Snorlax", "set": "Vivid Voltage", "number": "131/185", "variant": "Cosmos Holo", "lang": "English", "groupId": 38, "artDesc": "Dynamic pose with electric sparks"},
+      {"row": 125, "name": "Snorlax", "set": "Sword & Shield Promos", "number": "156/S-P", "variant": "Gym Promo Stamp", "lang": "Japanese", "groupId": 39, "artDesc": "Golden secret shiny blue body"},
+      {"row": 126, "name": "Snorlax", "set": "Peerless Fighters", "number": "93", "variant": "Holo", "lang": "Japanese", "groupId": 39, "artDesc": "Golden secret shiny blue body"},
+      {"row": 127, "name": "Snorlax", "set": "Chilling Reign", "number": "224/198", "variant": "Holo", "lang": "English", "groupId": 39, "artDesc": "Golden secret shiny blue body"},
+      {"row": 128, "name": "Snorlax", "set": "Sword & Shield Promos", "number": "SWSH119", "variant": "Blastoise VMAX Box Stamp", "lang": "English", "groupId": 39, "artDesc": "Golden secret shiny blue body"},
+      {"row": 129, "name": "Snorlax", "set": "Sword & Shield Family Pokémon Card Game", "number": "38", "variant": "Standard", "lang": "Japanese", "groupId": 40, "artDesc": "Simplified art sleeping on grass"},
+      {"row": 130, "name": "Snorlax", "set": "Fusion Strike", "number": "206/264", "variant": "Standard", "lang": "English", "groupId": 41, "artDesc": "Curled up in cozy bed"},
+      {"row": 131, "name": "Snorlax", "set": "Fusion Strike", "number": "206/264", "variant": "Reverse Holo", "lang": "English", "groupId": 41, "artDesc": "Curled up in cozy bed"},
+      {"row": 132, "name": "Snorlax", "set": "VMAX Climax", "number": "126/184", "variant": "Standard", "lang": "Japanese", "groupId": 41, "artDesc": "Curled up in cozy bed"},
+      {"row": 133, "name": "Snorlax", "set": "Start Deck 100", "number": "341", "variant": "Standard", "lang": "Japanese", "groupId": 41, "artDesc": "Curled up in cozy bed"},
+      {"row": 134, "name": "Snorlax", "set": "Start Deck 100", "number": "342", "variant": "Standard", "lang": "Japanese", "groupId": 42, "artDesc": "Sitting down surrounded by food"},
+      {"row": 135, "name": "Snorlax", "set": "Start Deck 100 CoroCoro Comic Version", "number": "8", "variant": "Standard", "lang": "Japanese", "groupId": 42, "artDesc": "Sitting down surrounded by food"},
+      {"row": 136, "name": "Snorlax", "set": "Dark Phantasma", "number": "58", "variant": "Standard", "lang": "Japanese", "groupId": 43, "artDesc": "Sleeping soundly under night sky"},
+      {"row": 137, "name": "Snorlax", "set": "Dark Phantasma", "number": "77", "variant": "Holo", "lang": "Japanese", "groupId": 44, "artDesc": "Napping beside Cook in kitchen"},
+      {"row": 138, "name": "Snorlax", "set": "Pokémon GO", "number": "056/071", "variant": "Holo", "lang": "Japanese", "groupId": 45, "artDesc": "Blocking real-world crosswalk pavement"},
+      {"row": 139, "name": "Snorlax", "set": "Pokémon GO", "number": "055/078", "variant": "Standard", "lang": "English", "groupId": 45, "artDesc": "Blocking real-world crosswalk pavement"},
+      {"row": 140, "name": "Snorlax", "set": "Pokémon GO", "number": "055/078", "variant": "Reverse Holo", "lang": "English", "groupId": 45, "artDesc": "Blocking real-world crosswalk pavement"},
+      {"row": 141, "name": "Snorlax", "set": "Pokémon GO", "number": "055/078", "variant": "Holo", "lang": "English", "groupId": 45, "artDesc": "Blocking real-world crosswalk pavement"},
+      {"row": 142, "name": "Snorlax", "set": "Lost Origin", "number": "143/196", "variant": "Standard", "lang": "English", "groupId": 43, "artDesc": "Sleeping soundly under night sky"},
+      {"row": 143, "name": "Snorlax", "set": "Lost Origin", "number": "143/196", "variant": "Reverse Holo", "lang": "English", "groupId": 43, "artDesc": "Sleeping soundly under night sky"},
+      {"row": 144, "name": "Snorlax", "set": "Lost Origin", "number": "143/196", "variant": "Cosmos Holo", "lang": "English", "groupId": 43, "artDesc": "Sleeping soundly under night sky"},
+      {"row": 145, "name": "Snorlax", "set": "Lost Origin", "number": "143/196", "variant": "Build & Battle Box Stamp", "lang": "English", "groupId": 43, "artDesc": "Sleeping soundly under night sky"},
+      {"row": 146, "name": "Snorlax", "set": "Lost Origin: Trainer Gallery", "number": "TG10/TG30", "variant": "Holo", "lang": "English", "groupId": 44, "artDesc": "Napping beside Cook in kitchen"},
+      {"row": 147, "name": "Snorlax GX", "set": "Storming Emergence: Abundant", "number": "102/150", "variant": "Standard", "lang": "Chinese", "groupId": 46, "artDesc": "Snorlax GX unleashing powerful strike"},
+      {"row": 148, "name": "Snorlax", "set": "Shining Synergy GX Starter Deck", "number": "213", "variant": "Standard", "lang": "Chinese", "groupId": 47, "artDesc": "Glowing aura effect surrounding body"},
+      {"row": 149, "name": "Eevee & Snorlax GX", "set": "Shining Synergy: Summon", "number": "103/181", "variant": "Standard", "lang": "Chinese", "groupId": 24, "artDesc": "Eevee riding high on Snorlax"},
+      {"row": 150, "name": "Eevee & Snorlax GX", "set": "Shining Synergy: Summon", "number": "170/181", "variant": "Standard", "lang": "Chinese", "groupId": 25, "artDesc": "Full art Eevee sitting on belly"},
+      {"row": 151, "name": "Eevee & Snorlax GX", "set": "Shining Synergy: Summon", "number": "171/181", "variant": "Standard", "lang": "Chinese", "groupId": 26, "artDesc": "Alt art, Eevee napping on head"},
+      {"row": 152, "name": "Snorlax", "set": "Shining Synergy: Supreme", "number": "124", "variant": "Standard", "lang": "Chinese", "groupId": 35, "artDesc": "Munching happily on Oran berry"},
+      {"row": 153, "name": "Snorlax", "set": "Shining Synergy: Supreme", "number": "124", "variant": "Reverse Holo", "lang": "Chinese", "groupId": 35, "artDesc": "Munching happily on Oran berry"},
+      {"row": 154, "name": "Snorlax", "set": "Crown Zenith", "number": "109/159", "variant": "Standard", "lang": "English", "groupId": 48, "artDesc": "Sleeping happily on snowy hill"},
+      {"row": 155, "name": "Snorlax", "set": "Crown Zenith", "number": "109/159", "variant": "Reverse Holo", "lang": "English", "groupId": 48, "artDesc": "Sleeping happily on snowy hill"},
+      {"row": 156, "name": "Snorlax", "set": "Battle Party Set: Metal Deck", "number": "9", "variant": "Standard", "lang": "Chinese", "groupId": 35, "artDesc": "Munching happily on Oran berry"},
+      {"row": 157, "name": "Snorlax V", "set": "Dynamax Clash Deck Building Box", "number": "9", "variant": "Standard", "lang": "Chinese", "groupId": 31, "artDesc": "Snorlax V standing ready to fight"},
+      {"row": 158, "name": "Snorlax", "set": "Dynamax Clash Deck V Starter Deck", "number": "152", "variant": "Standard", "lang": "Chinese", "groupId": 35, "artDesc": "Munching happily on Oran berry"},
+      {"row": 159, "name": "Snorlax", "set": "Dynamax Clash: Thunder", "number": "110", "variant": "Standard", "lang": "Chinese", "groupId": 35, "artDesc": "Munching happily on Oran berry"},
+      {"row": 160, "name": "Snorlax", "set": "Dynamax Clash: Thunder", "number": "110", "variant": "Reverse Holo", "lang": "Chinese", "groupId": 35, "artDesc": "Munching happily on Oran berry"},
+      {"row": 161, "name": "Snorlax V", "set": "Dynamax Clash: Thunder", "number": "111", "variant": "Holo", "lang": "Chinese", "groupId": 31, "artDesc": "Snorlax V standing ready to fight"},
+      {"row": 162, "name": "Snorlax VMAX", "set": "Dynamax Clash: Thunder", "number": "112", "variant": "Holo", "lang": "Chinese", "groupId": 32, "artDesc": "Gigantamax Snorlax with park tree"},
+      {"row": 163, "name": "Snorlax V", "set": "Dynamax Clash: Thunder", "number": "188", "variant": "Holo", "lang": "Chinese", "groupId": 33, "artDesc": "Snorlax V full art textured pose"},
+      {"row": 164, "name": "Snorlax VMAX", "set": "Dynamax Clash: Thunder", "number": "207", "variant": "Holo", "lang": "Chinese", "groupId": 34, "artDesc": "Gigantamax Snorlax rainbow secret print"},
+      {"row": 165, "name": "Snorlax", "set": "Pokémon Card 151", "number": "143/165", "variant": "Standard", "lang": "Japanese", "groupId": 49, "artDesc": "Relaxing on sunny grassy field"},
+      {"row": 166, "name": "Snorlax", "set": "Pokémon Card 151", "number": "143/165", "variant": "Pokeball Mirror Foil", "lang": "Japanese", "groupId": 49, "artDesc": "Relaxing on sunny grassy field"},
+      {"row": 167, "name": "Snorlax", "set": "Pokémon Card 151", "number": "143/165", "variant": "Masterball Mirror Foil", "lang": "Japanese", "groupId": 49, "artDesc": "Relaxing on sunny grassy field"},
+      {"row": 168, "name": "Snorlax", "set": "Pokémon Card 151", "number": "181/165", "variant": "Holo", "lang": "Japanese", "groupId": 50, "artDesc": "Illustration rare sleeping in doorway"},
+      {"row": 169, "name": "Snorlax", "set": "Vivid Portrayals: Obsidian", "number": "86", "variant": "Standard", "lang": "Chinese", "groupId": 51, "artDesc": "Sitting near river enjoying breeze"},
+      {"row": 170, "name": "Snorlax", "set": "Vivid Portrayals: Obsidian", "number": "86", "variant": "Reverse Holo", "lang": "Chinese", "groupId": 51, "artDesc": "Sitting near river enjoying breeze"},
+      {"row": 171, "name": "Snorlax", "set": "Vivid Portrayals: Obsidian", "number": "142", "variant": "Holo", "lang": "Chinese", "groupId": 52, "artDesc": "Full art textured sleeping posture"},
+      {"row": 172, "name": "Eevee & Snorlax GX", "set": "Golden Energy", "number": "054/070", "variant": "Holo", "lang": "Chinese", "groupId": 27, "artDesc": "Eevee and Snorlax high-fiving together"},
+      {"row": 173, "name": "Snorlax", "set": "151", "number": "143/165", "variant": "Standard", "lang": "English", "groupId": 49, "artDesc": "Relaxing on sunny grassy field"},
+      {"row": 174, "name": "Snorlax", "set": "151", "number": "143/165", "variant": "Reverse Holo", "lang": "English", "groupId": 49, "artDesc": "Relaxing on sunny grassy field"},
+      {"row": 175, "name": "Snorlax", "set": "Scarlet & Violet Promos", "number": "SVP051", "variant": "Holo", "lang": "English", "groupId": 50, "artDesc": "Illustration rare sleeping in doorway"},
+      {"row": 176, "name": "Snorlax", "set": "Scarlet & Violet Promos", "number": "SVP051", "variant": "Pokémon Center Stamp", "lang": "English", "groupId": 50, "artDesc": "Illustration rare sleeping in doorway"},
+      {"row": 177, "name": "Snorlax Doll", "set": "Paradox Rift", "number": "175/182", "variant": "Standard", "lang": "English", "groupId": 53, "artDesc": "Plush Snorlax doll sitting upright"},
+      {"row": 178, "name": "Snorlax Doll", "set": "Paradox Rift", "number": "175/182", "variant": "Reverse Holo", "lang": "English", "groupId": 53, "artDesc": "Plush Snorlax doll sitting upright"},
+      {"row": 179, "name": "Snorlax", "set": "Venusaur, Charizard & Blastoise Special Deck Set ex", "number": "21", "variant": "Standard", "lang": "Japanese", "groupId": 54, "artDesc": "Snorlax ex striking heavy stance"},
+      {"row": 180, "name": "Snorlax", "set": "Primordial Arts V Starter Deck", "number": "117", "variant": "Standard", "lang": "Chinese", "groupId": 35, "artDesc": "Munching happily on Oran berry"},
+      {"row": 181, "name": "Snorlax", "set": "Sword & Shield Family Pokémon Card Game", "number": "38", "variant": "Standard", "lang": "Chinese", "groupId": 40, "artDesc": "Simplified art sleeping on grass"},
+      {"row": 182, "name": "Snorlax", "set": "Trading Card Game Classic: Venusaur & Lugia ex Deck", "number": "16", "variant": "Holo", "lang": "English", "groupId": 1, "artDesc": "Classic sitting, smiling Snorlax"},
+      {"row": 183, "name": "Snorlax", "set": "Pokémon Card Game Classic: Venusaur & Lugia ex Deck", "number": "16", "variant": "Holo", "lang": "Japanese", "groupId": 1, "artDesc": "Classic sitting, smiling Snorlax"},
+      {"row": 184, "name": "Snorlax", "set": "Shiny Treasure ex", "number": "145", "variant": "Standard", "lang": "Japanese", "groupId": 55, "artDesc": "Baby shiny Snorlax sparkling blue"},
+      {"row": 185, "name": "Snorlax", "set": "Shiny Treasure ex", "number": "145", "variant": "Mirror Foil", "lang": "Japanese", "groupId": 55, "artDesc": "Baby shiny Snorlax sparkling blue"},
+      {"row": 186, "name": "Snorlax", "set": "Shiny Treasure ex", "number": "310", "variant": "Holo", "lang": "Japanese", "groupId": 56, "artDesc": "Special illustration rare shiny sleeping"},
+      {"row": 187, "name": "Snorlax", "set": "Paldean Fates", "number": "202", "variant": "Holo", "lang": "English", "groupId": 55, "artDesc": "Baby shiny Snorlax sparkling blue"},
+      {"row": 188, "name": "Snorlax", "set": "Pokémon Card Game Battle Academy", "number": "46", "variant": "Standard", "lang": "Japanese", "groupId": 57, "artDesc": "Basic pose on clean background"},
+      {"row": 189, "name": "Snorlax", "set": "Crimson Haze", "number": "051/066", "variant": "Standard", "lang": "Japanese", "groupId": 58, "artDesc": "Napping peacefully under shade tree"},
+      {"row": 190, "name": "Snorlax", "set": "Start Deck 100", "number": "341", "variant": "Standard", "lang": "Chinese", "groupId": 41, "artDesc": "Curled up in cozy bed"},
+      {"row": 191, "name": "Snorlax", "set": "Start Deck 100", "number": "341", "variant": "Mirror Foil", "lang": "Chinese", "groupId": 41, "artDesc": "Curled up in cozy bed"},
+      {"row": 192, "name": "Snorlax", "set": "Start Deck 100", "number": "342", "variant": "Standard", "lang": "Chinese", "groupId": 42, "artDesc": "Sitting down surrounded by food"},
+      {"row": 193, "name": "Snorlax", "set": "Scarlet & Violet Promos", "number": "SVP122", "variant": "Pokémon Center Stamp", "lang": "English", "groupId": 50, "artDesc": "Illustration rare sleeping in doorway"},
+      {"row": 194, "name": "Snorlax", "set": "Twilight Masquerade", "number": "136/167", "variant": "Standard", "lang": "English", "groupId": 58, "artDesc": "Napping peacefully under shade tree"},
+      {"row": 195, "name": "Snorlax", "set": "Twilight Masquerade", "number": "136/167", "variant": "Reverse Holo", "lang": "English", "groupId": 58, "artDesc": "Napping peacefully under shade tree"},
+      {"row": 196, "name": "Snorlax", "set": "Gallant Galaxy V Starter Deck", "number": "97", "variant": "Standard", "lang": "Chinese", "groupId": 59, "artDesc": "Charging forward in starry space"},
+      {"row": 197, "name": "Snorlax", "set": "Gallant Galaxy V Starter Deck", "number": "98", "variant": "Standard", "lang": "Chinese", "groupId": 60, "artDesc": "Reaching forward with energetic outline"},
+      {"row": 198, "name": "Snorlax", "set": "Gallant Galaxy: Charm", "number": "93", "variant": "Standard", "lang": "Chinese", "groupId": 61, "artDesc": "Chibi style Snorlax holding charm"},
+      {"row": 199, "name": "Snorlax", "set": "Gallant Galaxy: Charm", "number": "93", "variant": "Reverse Holo", "lang": "Chinese", "groupId": 61, "artDesc": "Chibi style Snorlax holding charm"},
+      {"row": 200, "name": "Snorlax", "set": "Sword & Shield Promos", "number": "61", "variant": "Standard", "lang": "Chinese", "groupId": 62, "artDesc": "Special regional promo action pose"},
+      {"row": 201, "name": "Snorlax", "set": "Scarlet & Violet Promos", "number": "277", "variant": "Standard", "lang": "Chinese", "groupId": 63, "artDesc": "Promotional full art dynamic stance"},
+      {"row": 202, "name": "Snorlax", "set": "Scarlet & Violet Promos", "number": "277", "variant": "Mirror Foil", "lang": "Chinese", "groupId": 63, "artDesc": "Promotional full art dynamic stance"},
+      {"row": 203, "name": "Snorlax", "set": "Scarlet & Violet Promos", "number": "277", "variant": "Expansion Stamp", "lang": "Chinese", "groupId": 63, "artDesc": "Promotional full art dynamic stance"},
+      {"row": 204, "name": "Snorlax", "set": "Stellar Tera Type Starter Set: Sylveon ex", "number": "010/021", "variant": "Standard", "lang": "Japanese", "groupId": 64, "artDesc": "Stellar tera crystal crown shine"},
+      {"row": 205, "name": "Snorlax", "set": "Marine Shadow: Banish", "number": "113", "variant": "Standard", "lang": "Chinese", "groupId": 65, "artDesc": "Dark shadow aura surrounding body"},
+      {"row": 206, "name": "Snorlax", "set": "Marine Shadow: Banish", "number": "113", "variant": "Reverse Holo", "lang": "Chinese", "groupId": 65, "artDesc": "Dark shadow aura surrounding body"},
+      {"row": 207, "name": "Snorlax", "set": "Pokémon Card Display Set Gift Box 3", "number": "10", "variant": "Standard", "lang": "Chinese", "groupId": 35, "artDesc": "Munching happily on Oran berry"},
+      {"row": 208, "name": "Snorlax", "set": "Surging Sparks", "number": "144/191", "variant": "Standard", "lang": "English", "groupId": 66, "artDesc": "Surrounded by electric lightning bolts"},
+      {"row": 209, "name": "Snorlax", "set": "Surging Sparks", "number": "144/191", "variant": "Reverse Holo", "lang": "English", "groupId": 66, "artDesc": "Surrounded by electric lightning bolts"},
+      {"row": 210, "name": "Snorlax", "set": "Variety Treasure Box Collection", "number": "18", "variant": "Standard", "lang": "Chinese", "groupId": 67, "artDesc": "Sitting happily inside treasure chest"},
+      {"row": 211, "name": "Snorlax ex", "set": "Generations Starter Decks", "number": "094/175", "variant": "Standard", "lang": "Japanese", "groupId": 68, "artDesc": "Snorlax ex dynamic battle posture"},
+      {"row": 212, "name": "Snorlax", "set": "Collection 151", "number": "143/165", "variant": "Standard", "lang": "Chinese", "groupId": 49, "artDesc": "Relaxing on sunny grassy field"},
+      {"row": 213, "name": "Snorlax", "set": "Collection 151", "number": "143/165", "variant": "Pokeball Mirror Foil", "lang": "Chinese", "groupId": 49, "artDesc": "Relaxing on sunny grassy field"},
+      {"row": 214, "name": "Snorlax", "set": "Collection 151", "number": "143/165", "variant": "Masterball Mirror Foil", "lang": "Chinese", "groupId": 49, "artDesc": "Relaxing on sunny grassy field"},
+      {"row": 215, "name": "Snorlax", "set": "Collection 151", "number": "169/165", "variant": "Holo", "lang": "Chinese", "groupId": 50, "artDesc": "Illustration rare sleeping in doorway"},
+      {"row": 216, "name": "Snorlax", "set": "Happy Set: Modification Pack", "number": "1", "variant": "Standard", "lang": "Chinese", "groupId": 49, "artDesc": "Relaxing on sunny grassy field"},
+      {"row": 217, "name": "Snorlax ex", "set": "Prismatic Evolutions", "number": "076/131", "variant": "Double Rare", "lang": "English", "groupId": 68, "artDesc": "Snorlax ex dynamic battle posture"},
+      {"row": 218, "name": "Snorlax ex", "set": "Prismatic Evolutions", "number": "076/131", "variant": "Double Rare Reverse Foil", "lang": "English", "groupId": 68, "artDesc": "Snorlax ex dynamic battle posture"},
+      {"row": 219, "name": "Snorlax ex", "set": "Prismatic Evolutions", "number": "076/131", "variant": "Ultra Rare", "lang": "English", "groupId": 68, "artDesc": "Snorlax ex dynamic battle posture"},
+      {"row": 220, "name": "Hop's Snorlax", "set": "Battle Partners", "number": "75", "variant": "Standard", "lang": "Japanese", "groupId": 69, "artDesc": "Hop standing beside sleeping Snorlax"},
+      {"row": 221, "name": "Snorlax", "set": "Battle Party: Shared Dream", "number": "93", "variant": "Standard", "lang": "Chinese", "groupId": 72, "artDesc": "Sleeping peacefully dreaming of food"},
+      {"row": 222, "name": "Hop's Snorlax", "set": "Journey Together", "number": "117", "variant": "Uncommon", "lang": "English", "groupId": 69, "artDesc": "Hop standing beside sleeping Snorlax"},
+      {"row": 223, "name": "Hop's Snorlax", "set": "Journey Together", "number": "117", "variant": "Uncommon Reverse Foil", "lang": "English", "groupId": 69, "artDesc": "Hop standing beside sleeping Snorlax"},
+      {"row": 224, "name": "Hop's Snorlax", "set": "Journey Together", "number": "117", "variant": "Illustration Rare", "lang": "English", "groupId": 69, "artDesc": "Hop standing beside sleeping Snorlax"},
+      {"row": 225, "name": "Hop's Snorlax", "set": "Journey Together", "number": "117", "variant": "Special Illustration Rare", "lang": "English", "groupId": 69, "artDesc": "Hop standing beside sleeping Snorlax"},
+      {"row": 226, "name": "Hop's Snorlax", "set": "Journey Together", "number": "117", "variant": "Ultra Rare", "lang": "English", "groupId": 69, "artDesc": "Hop standing beside sleeping Snorlax"},
+      {"row": 227, "name": "Hop's Snorlax", "set": "Journey Together", "number": "117", "variant": "Hyper Rare", "lang": "English", "groupId": 69, "artDesc": "Hop standing beside sleeping Snorlax"},
+      {"row": 228, "name": "Hop's Snorlax", "set": "Journey Together", "number": "117", "variant": "Staff Stamp", "lang": "English", "groupId": 69, "artDesc": "Hop standing beside sleeping Snorlax"},
+      {"row": 229, "name": "Hop's Snorlax", "set": "Scarlet & Violet Promos", "number": "SVP184", "variant": "Holo Promo", "lang": "English", "groupId": 70, "artDesc": "Hop high-fiving cheering Snorlax promo"},
+      {"row": 230, "name": "Hop's Snorlax", "set": "Scarlet & Violet Promos", "number": "SVP184", "variant": "Pokémon Center Stamp", "lang": "English", "groupId": 70, "artDesc": "Hop high-fiving cheering Snorlax promo"},
+      {"row": 231, "name": "Snorlax", "set": "Departure Theme Pack", "number": "109", "variant": "Standard", "lang": "Chinese", "groupId": 49, "artDesc": "Relaxing on sunny grassy field"},
+      {"row": 232, "name": "Snorlax", "set": "Battle Party: Shining Dream", "number": "122", "variant": "Standard", "lang": "Chinese", "groupId": 72, "artDesc": "Sleeping peacefully dreaming of food"},
+      {"row": 233, "name": "Snorlax Doll", "set": "Ardent Obsidian", "number": "115/129", "variant": "Standard", "lang": "Chinese", "groupId": 53, "artDesc": "Plush Snorlax doll sitting upright"},
+      {"row": 234, "name": "Snorlax Doll", "set": "Ardent Obsidian", "number": "115/129", "variant": "Reverse Holo", "lang": "Chinese", "groupId": 53, "artDesc": "Plush Snorlax doll sitting upright"},
+      {"row": 235, "name": "Snorlax Doll", "set": "Ardent Obsidian", "number": "115/129", "variant": "Masterball Mirror Foil", "lang": "Chinese", "groupId": 53, "artDesc": "Plush Snorlax doll sitting upright"},
+      {"row": 236, "name": "Hop's Snorlax", "set": "MEGA Dream ex", "number": "136", "variant": "Standard", "lang": "Japanese", "groupId": 71, "artDesc": "Hop's Snorlax ex mega stance"},
+      {"row": 237, "name": "Hop's Snorlax", "set": "MEGA Dream ex", "number": "136", "variant": "Mirror Foil", "lang": "Japanese", "groupId": 71, "artDesc": "Hop's Snorlax ex mega stance"},
+      {"row": 238, "name": "Hop's Snorlax", "set": "MEGA Dream ex", "number": "136", "variant": "Masterball Mirror Foil", "lang": "Japanese", "groupId": 71, "artDesc": "Hop's Snorlax ex mega stance"},
+      {"row": 239, "name": "Snorlax", "set": "Start Deck 100 Battle Collection", "number": "567", "variant": "Standard", "lang": "Japanese", "groupId": 49, "artDesc": "Relaxing on sunny grassy field"},
+      {"row": 240, "name": "Snorlax", "set": "Start Deck 100 Battle Collection", "number": "568", "variant": "Standard", "lang": "Japanese", "groupId": 73, "artDesc": "Alternative collection print sitting down"},
+      {"row": 241, "name": "Hop's Snorlax", "set": "Start Deck 100 Battle Collection", "number": "569", "variant": "Standard", "lang": "Japanese", "groupId": 69, "artDesc": "Hop standing beside sleeping Snorlax"},
+      {"row": 242, "name": "Snorlax", "set": "Start Deck 100 Battle Collection CoroCiao Version", "number": "12", "variant": "Standard", "lang": "Japanese", "groupId": 49, "artDesc": "Relaxing on sunny grassy field"},
+      {"row": 243, "name": "Snorlax", "set": "Blade Awakenings", "number": "158/167", "variant": "Standard", "lang": "Chinese", "groupId": 74, "artDesc": "Powerful slashing attack aura effect"},
+      {"row": 244, "name": "Snorlax", "set": "Blade Awakenings", "number": "158/167", "variant": "Reverse Holo", "lang": "Chinese", "groupId": 74, "artDesc": "Powerful slashing attack aura effect"},
+      {"row": 245, "name": "Snorlax", "set": "Blade Awakenings", "number": "158/167", "variant": "Masterball Mirror Foil", "lang": "Chinese", "groupId": 74, "artDesc": "Powerful slashing attack aura effect"},
+      {"row": 246, "name": "Snorlax", "set": "Pokémon Card Game Battle Academy", "number": "46", "variant": "Standard", "lang": "Chinese", "groupId": 57, "artDesc": "Basic pose on clean background"},
+      {"row": 247, "name": "Snorlax", "set": "Nihil Zero", "number": "62", "variant": "Standard", "lang": "Japanese", "groupId": 75, "artDesc": "Ethereal dark void background pose"},
+      {"row": 248, "name": "Snorlax", "set": "Perfect Order", "number": "63", "variant": "Standard", "lang": "English", "groupId": 76, "artDesc": "Standing strong with metallic glow"},
+      {"row": 249, "name": "Snorlax", "set": "Perfect Order", "number": "63", "variant": "Reverse Holo", "lang": "English", "groupId": 76, "artDesc": "Standing strong with metallic glow"},
+      {"row": 250, "name": "Snorlax", "set": "Happy Set IX: Modification Pack", "number": "3", "variant": "Standard", "lang": "Chinese", "groupId": 77, "artDesc": "Chibi promotional happy eating pose"},
+      {"row": 251, "name": "Snorlax ex", "set": "Happy Set IX: Reward Pack", "number": "6", "variant": "Standard", "lang": "Chinese", "groupId": 68, "artDesc": "Snorlax ex dynamic battle posture"},
+      {"row": 252, "name": "Hop's Snorlax", "set": "Chasing Glory Together", "number": "175", "variant": "Standard", "lang": "Chinese", "groupId": 69, "artDesc": "Hop standing beside sleeping Snorlax"},
+      {"row": 253, "name": "Hop's Snorlax", "set": "Chasing Glory Together", "number": "175", "variant": "Reverse Holo", "lang": "Chinese", "groupId": 69, "artDesc": "Hop standing beside sleeping Snorlax"},
+      {"row": 254, "name": "Hop's Snorlax", "set": "Chasing Glory Together", "number": "175", "variant": "Masterball Mirror Foil", "lang": "Chinese", "groupId": 69, "artDesc": "Hop standing beside sleeping Snorlax"}
+    ];
+
+    // Local storage owned state & cached price storage
+    let ownedMap = JSON.parse(localStorage.getItem('snorlax_owned_cards') || '{}');
+    let priceCache = JSON.parse(localStorage.getItem('snorlax_prices') || '{}');
+
+    // Unique art group indexing
+    const firstSeenGroups = new Set();
+    const groupFirstRowMap = {};
+
+    rawCards.forEach(c => {
+        if (!firstSeenGroups.has(c.groupId)) {
+            firstSeenGroups.add(c.groupId);
+            c.isFirstInstance = true;
+            groupFirstRowMap[c.groupId] = c;
+        } else {
+            c.isFirstInstance = false;
+        }
+
+        c.isOwned = !!ownedMap[c.row];
+        c.apiPrice = priceCache[c.row] || 0;
+    });
+
+    function buildImageUrl(card) {
+        if (card.row === 2) return "https://www.pokellector.com/card_images/Jungle.JP/47.png";
+        if (card.row === 3) return "https://www.pokellector.com/card_images/Unnumbered-Promos/Hungry-Snorlax.png";
+        if (card.row === 4 || card.row === 5) return "https://www.pokellector.com/card_images/Vending-Sheet-1/34-Snorlax.png";
+        if (card.row === 12) return "https://www.pokellector.com/card_images/Challenge-from-the-Darkness/73-Rockets-Snorlax.png";
+
+        const cleanNum = card.number.split('/')[0].replace(/^0+/, '');
+        const engSetMap = {
+            "Jungle": "base2", "Base Set 2": "base4", "Gym Heroes": "gym1", "Legendary Collection": "base6",
+            "Wizards Promos": "promo", "Skyridge": "ecard3", "EX FireRed & LeafGreen": "ex6",
+            "EX Team Rocket Returns": "ex7", "EX Dragon Frontiers": "ex15", "Diamond & Pearl": "dp1",
+            "Diamond & Pearl Promos": "dpp", "Rising Rivals": "dp8", "Call of Legends": "col1",
+            "Boundaries Crossed": "bw7", "Plasma Storm": "bw8", "Kalos Starter Set": "xy0", "Flashfire": "xy2",
+            "BREAKthrough": "xy8", "Generations": "g1", "Fates Collide": "xy10", "XY Promos": "xyp",
+            "Sun & Moon Promos": "smp", "Team Up": "sm9", "Unbroken Bonds": "sm10", "Hidden Fates": "sma",
+            "Sword & Shield": "swsh1", "Sword & Shield Promos": "swshp", "Rebel Clash": "swsh2",
+            "Battle Academy 2020: Mewtwo Deck": "swsh1", "Vivid Voltage": "swsh4", "Chilling Reign": "swsh6",
+            "Fusion Strike": "swsh8", "Lost Origin": "swsh11", "Lost Origin: Trainer Gallery": "swsh11tg",
+            "Crown Zenith": "swsh12pt5", "Pokémon GO": "pgo", "151": "sv3pt5", "Scarlet & Violet Promos": "svp",
+            "Paradox Rift": "sv4", "Paldean Fates": "sv4pt5", "Twilight Masquerade": "sv6", "Surging Sparks": "sv8",
+            "Prismatic Evolutions": "sv8pt5", "Journey Together": "sv9", "Perfect Order": "sv10"
+        };
+
+        if (engSetMap[card.set]) {
+            return `https://images.pokemontcg.io/${engSetMap[card.set]}/${cleanNum}_hires.png`;
+        }
+        return `https://images.pokemontcg.io/base2/11_hires.png`;
+    }
+
+    // Fetch prices automatically via Pokemon TCG API
+    async function fetchLivePrices() {
+        const btn = document.querySelector('button[onclick="fetchLivePrices()"]');
+        btn.innerText = "Fetching Pricing...";
+
+        try {
+            const response = await fetch("https://api.pokemontcg.io/v2/cards?q=name:snorlax");
+            const data = await response.json();
+
+            if (data && data.data) {
+                data.data.forEach(apiCard => {
+                    const price = apiCard.tcgplayer?.prices?.holofoil?.market || 
+                                 apiCard.tcgplayer?.prices?.normal?.market || 
+                                 apiCard.tcgplayer?.prices?.reverseHolofoil?.market || 0;
+
+                    if (price > 0) {
+                        // Match with our internal cards
+                        rawCards.forEach(c => {
+                            if (c.name.toLowerCase() === apiCard.name.toLowerCase() && apiCard.number.includes(c.number.split('/')[0])) {
+                                c.apiPrice = parseFloat(price.toFixed(2));
+                                priceCache[c.row] = c.apiPrice;
+                            }
+                        });
+                    }
+                });
+
+                localStorage.setItem('snorlax_prices', JSON.stringify(priceCache));
+                alert("Updated market pricing for English card catalog!");
+            }
+        } catch (e) {
+            console.log("Error fetching API pricing", e);
+            alert("Pricing fetched for cached values.");
+        }
+
+        btn.innerText = "Sync Live Prices";
+        updateStatsPill();
+        filterCards();
+    }
+
+    function toggleOwned(row, checked) {
+        ownedMap[row] = checked;
+        localStorage.setItem('snorlax_owned_cards', JSON.stringify(ownedMap));
+        
+        const cardObj = rawCards.find(c => c.row === row);
+        if (cardObj) cardObj.isOwned = checked;
+
+        updateStatsPill();
+        filterCards();
+    }
+
+    function exportData() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(ownedMap));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "snorlax_collection_backup.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    function updateStatsPill() {
+        const totalOwned = rawCards.filter(c => c.isOwned).length;
+        const ownedGroupIds = new Set(rawCards.filter(c => c.isOwned).map(c => c.groupId));
+        
+        let totalValue = 0;
+        rawCards.forEach(c => {
+            if (c.isOwned && c.apiPrice) totalValue += c.apiPrice;
+        });
+
+        document.getElementById('ownedCountPill').innerText = `Owned: ${totalOwned} / 254`;
+        document.getElementById('artProgressPill').innerText = `Unique Art Owned: ${ownedGroupIds.size} / 77`;
+        document.getElementById('valPill').innerText = `Collection Value: $${totalValue.toFixed(2)}`;
+    }
+
+    function renderGallery(cards) {
+        const grid = document.getElementById('galleryGrid');
+        grid.innerHTML = '';
+
+        cards.forEach(card => {
+            const cardEl = document.createElement('div');
+            cardEl.className = `card-item ${card.isFirstInstance ? 'is-first' : ''} ${card.isOwned ? 'is-owned' : ''}`;
+
+            const imgUrl = buildImageUrl(card);
+
+            const queryParam = encodeURIComponent(`${card.name} ${card.set} ${card.number}`);
+            const pricechartingUrl = `https://www.pricecharting.com/search-products?q=${queryParam}`;
+            const ebayUrl = `https://www.ebay.com/sch/i.html?_nkw=${queryParam}+pokemon&_sop=12`;
+            const collectrUrl = `https://app.getcollectr.com/search?q=${queryParam}`;
+
+            cardEl.innerHTML = `
+                ${card.isFirstInstance ? '<span class="badge-first">1st Unique Art</span>' : ''}
+                ${card.isOwned ? '<span class="badge-owned">✓ Owned</span>' : ''}
+
+                <div class="img-container">
+                    <img src="${imgUrl}" alt="${card.name}" loading="lazy" onerror="this.onerror=null; this.parentNode.innerHTML='<div style=\\'padding:20px; text-align:center; color:var(--text-sub);\\'><strong style=\\'color:var(--accent-yellow);\\'>${card.name}</strong><br>${card.set}<br>#${card.number}</div>';">
+                </div>
+
+                <div class="card-info">
+                    <div class="card-title">Row ${card.row}: ${card.name}</div>
+                    <div class="card-meta"><strong>Set:</strong> ${card.set} (${card.number})</div>
+                    <div class="card-meta"><strong>Variant:</strong> ${card.variant} | ${card.lang}</div>
+
+                    ${card.apiPrice > 0 ? 
+                        `<div class="price-badge-live"><span>TCGPlayer Market:</span> <span>$${card.apiPrice.toFixed(2)}</span></div>` : 
+                        ''
+                    }
+
+                    <div class="art-description">🎨 ${card.artDesc}</div>
+
+                    <label class="owner-control">
+                        <input type="checkbox" ${card.isOwned ? 'checked' : ''} onchange="toggleOwned(${card.row}, this.checked)">
+                        I Own This Card
+                    </label>
+
+                    <div class="price-buttons">
+                        <a href="${pricechartingUrl}" target="_blank" class="price-btn">PriceCharting</a>
+                        <a href="${ebayUrl}" target="_blank" class="price-btn">eBay Sold</a>
+                        <a href="${collectrUrl}" target="_blank" class="price-btn">Collectr</a>
+                    </div>
+                </div>
+            `;
+
+            grid.appendChild(cardEl);
+        });
+
+        document.getElementById('totalCountPill').innerText = `Showing: ${cards.length}`;
+    }
+
+    function filterCards() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const artFilter = document.getElementById('artFilter').value;
+        const sortFilter = document.getElementById('sortFilter').value;
+        const langFilter = document.getElementById('langFilter').value;
+
+        const ownedGroupIds = new Set(rawCards.filter(c => c.isOwned).map(c => c.groupId));
+
+        let filtered = rawCards.filter(c => {
+            const matchesSearch = c.name.toLowerCase().includes(search) || 
+                                  c.set.toLowerCase().includes(search) || 
+                                  c.number.toLowerCase().includes(search) || 
+                                  c.artDesc.toLowerCase().includes(search);
+
+            let matchesArt = true;
+            if (artFilter === 'unique-only') matchesArt = c.isFirstInstance;
+            else if (artFilter === 'owned') matchesArt = c.isOwned;
+            else if (artFilter === 'unowned') matchesArt = !c.isOwned;
+            else if (artFilter === 'unique-needed') matchesArt = c.isFirstInstance && !ownedGroupIds.has(c.groupId);
+
+            const matchesLang = langFilter === 'all' || c.lang === langFilter;
+
+            return matchesSearch && matchesArt && matchesLang;
+        });
+
+        // Price Sorter Logic
+        if (sortFilter === 'price-desc') {
+            filtered.sort((a, b) => (b.apiPrice || 0) - (a.apiPrice || 0));
+        } else if (sortFilter === 'price-asc') {
+            filtered.sort((a, b) => (a.apiPrice || 0) - (b.apiPrice || 0));
+        } else {
+            filtered.sort((a, b) => a.row - b.row);
+        }
+
+        renderGallery(filtered);
+    }
+
+    updateStatsPill();
+    renderGallery(rawCards);
+</script>
+
+</body>
+</html>
