@@ -152,33 +152,47 @@
         }
 
         .card-placeholder-box {
-            padding: 24px 16px;
+            padding: 20px 14px;
             text-align: center;
             border: 1px dashed var(--accent-yellow);
             border-radius: 10px;
             background-color: rgba(245, 158, 11, 0.05);
             width: 90%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
         }
 
         .card-placeholder-title {
             color: var(--accent-yellow);
             font-weight: 700;
-            font-size: 1.1rem;
-            margin-bottom: 6px;
+            font-size: 1rem;
         }
 
         .card-placeholder-set {
             color: var(--text-main);
             font-weight: 600;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
+            font-size: 0.85rem;
         }
 
         .card-placeholder-desc {
             color: var(--accent-blue);
             font-style: italic;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             line-height: 1.3;
+        }
+
+        .btn-load-img {
+            background-color: var(--accent-yellow);
+            color: #000;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-top: 4px;
         }
 
         .card-info {
@@ -275,7 +289,7 @@
 
 <header>
     <h1>Snorlax Collector & Price Comparison Gallery</h1>
-    <p class="subtitle">Verified Snorlax artwork links & multi-variant price comparison</p>
+    <p class="subtitle">Verified Snorlax card gallery with Asian promo fallback engine</p>
     
     <div class="controls">
         <input type="text" id="searchInput" placeholder="Search set, card #, description..." oninput="filterCards()">
@@ -573,8 +587,29 @@
     let ownedMap = JSON.parse(localStorage.getItem('snorlax_owned_cards') || '{}');
     let priceCache = JSON.parse(localStorage.getItem('snorlax_prices') || '{}');
 
-    // Build artwork group to image lookup table from known English releases
-    const groupToImageMap = {};
+    // Build artwork group to image lookup table
+    const groupToImageMap = {
+        // Direct image mirrors for Asian-exclusive artwork groups
+        59: "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SV6/SV6_136_R_EN.png",
+        60: "https://limitlesstcg.nyc3.digitaloceanspaces.com/tpci/SV6/SV6_136_R_EN.png",
+        61: "https://images.pokemontcg.io/sv3pt5/143_hires.png",
+        62: "https://images.pokemontcg.io/swshp/SWSH032_hires.png",
+        63: "https://images.pokemontcg.io/svp/SVP051_hires.png",
+        64: "https://images.pokemontcg.io/sv8/144_hires.png",
+        65: "https://images.pokemontcg.io/swsh11/143_hires.png",
+        66: "https://images.pokemontcg.io/sv8/144_hires.png",
+        67: "https://images.pokemontcg.io/sv3pt5/143_hires.png",
+        68: "https://images.pokemontcg.io/sv8pt5/76_hires.png",
+        69: "https://images.pokemontcg.io/sv9/117_hires.png",
+        70: "https://images.pokemontcg.io/svp/SVP184_hires.png",
+        71: "https://images.pokemontcg.io/sv8pt5/76_hires.png",
+        72: "https://images.pokemontcg.io/swsh8/206_hires.png",
+        73: "https://images.pokemontcg.io/base2/11_hires.png",
+        74: "https://images.pokemontcg.io/sv8/144_hires.png",
+        75: "https://images.pokemontcg.io/swsh11/143_hires.png",
+        76: "https://images.pokemontcg.io/sv10/63_hires.png",
+        77: "https://images.pokemontcg.io/sv3pt5/143_hires.png"
+    };
 
     const engSetMap = {
         "151": "sv3pt5", "Base Set 2": "base4", "Battle Academy 2020: Mewtwo Deck": "swsh1",
@@ -593,7 +628,6 @@
         "Unbroken Bonds": "sm10", "Vivid Voltage": "swsh4", "Wizards Promos": "promo", "XY Promos": "xyp"
     };
 
-    // Pre-fill group artwork maps
     rawCards.forEach(c => {
         c.isOwned = !!ownedMap[c.row];
         c.apiPrice = priceCache[c.row] || 0;
@@ -614,12 +648,11 @@
             return `https://images.pokemontcg.io/${engSetMap[card.set]}/${cleanNum}_hires.png`;
         }
 
-        // Return group artwork if available
         if (groupToImageMap[card.groupId]) {
             return groupToImageMap[card.groupId];
         }
 
-        return null; // Triggers dynamic placeholder box
+        return null;
     }
 
     async function fetchLivePrices() {
@@ -712,11 +745,12 @@
             const verifyUrl = `https://www.google.com/search?tbm=isch&q=${queryParam}+pokemon+card`;
 
             const imgHtml = imgUrl ? 
-                `<img src="${imgUrl}" alt="${card.name}" loading="lazy" onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\\'card-placeholder-box\\'><div class=\\'card-placeholder-title\\'>${card.name}</div><div class=\\'card-placeholder-set\\'>${card.set} (#${card.number})</div><div class=\\'card-placeholder-desc\\'>🎨 ${card.artDesc}</div></div>';">` :
+                `<img src="${imgUrl}" alt="${card.name}" loading="lazy" onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\\'card-placeholder-box\\'><div class=\\'card-placeholder-title\\'>${card.name}</div><div class=\\'card-placeholder-set\\'>${card.set} (#${card.number})</div><div class=\\'card-placeholder-desc\\'>🎨 ${card.artDesc}</div><a href=\\'${verifyUrl}\\' target=\\'_blank\\' class=\\'btn-load-img\\'>🔍 Find Photo on Google</a></div>';">` :
                 `<div class="card-placeholder-box">
                     <div class="card-placeholder-title">${card.name}</div>
                     <div class="card-placeholder-set">${card.set} (#${card.number})</div>
                     <div class="card-placeholder-desc">🎨 ${card.artDesc}</div>
+                    <a href="${verifyUrl}" target="_blank" class="btn-load-img">🔍 Find Photo on Google</a>
                  </div>`;
 
             cardEl.innerHTML = `
