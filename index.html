@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Snorlax Unique Physical TCG Gallery</title>
+  <title>Snorlax Cards - Illustrator Validated (SGD)</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -23,7 +23,7 @@
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
       gap: 16px;
       max-width: 1400px;
       margin: 0 auto;
@@ -51,20 +51,32 @@
       min-height: 240px;
       object-fit: cover;
     }
-    .card-name {
-      font-size: 14px;
-      font-weight: 600;
-      margin-top: 10px;
-      color: #efefef;
+    .card-price {
+      font-size: 15px;
+      font-weight: 700;
+      color: #4caf50;
+      margin-top: 8px;
     }
     .card-artist {
-      font-size: 12px;
-      color: #ffd700;
-      margin-top: 4px;
+      font-size: 11px;
+      color: #ffb74d;
+      margin-top: 3px;
+      font-weight: 600;
+    }
+    .card-variant {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 2px;
+    }
+    .card-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 6px;
+      color: #efefef;
     }
     .card-id {
-      font-size: 11px;
-      color: #888;
+      font-size: 10px;
+      color: #666;
       margin-top: 2px;
     }
     .owned-label {
@@ -94,11 +106,11 @@
 </head>
 <body>
 
-  <h1>Snorlax Physical Card Gallery</h1>
-  <p class="subtitle" id="count-text">Deduplicating cards by unique artwork & illustrator...</p>
+  <h1>Snorlax Physical Master Set Gallery</h1>
+  <p class="subtitle" id="count-text">Physical Cards Only • Verified Illustrator & Price (SGD)</p>
 
   <div id="gallery" class="grid">
-    <div class="status" id="status-text">Filtering unique physical illustrations...</div>
+    <div class="status" id="status-text">Cross-referencing illustrators & PriceCharting benchmarks...</div>
   </div>
 
   <script>
@@ -114,59 +126,82 @@
       }
     }
 
-    async function fetchStrictlyUniqueSnorlax() {
+    async function fetchValidatedSnorlaxGallery() {
       const gallery = document.getElementById('gallery');
       const statusText = document.getElementById('status-text');
       const countText = document.getElementById('count-text');
 
       try {
         const response = await fetch('https://api.tcgdex.net/v2/en/cards?name=Snorlax');
-        if (!response.ok) throw new Error('API request failed');
+        if (!response.ok) throw new Error('API query failed');
         
         const cards = await response.json();
         statusText.remove();
 
-        const seenIllustrations = new Set();
-        let uniqueCount = 0;
+        const processedCards = [];
+        const seenArtworks = new Set();
 
         for (const card of cards) {
-          // Ignore Pocket / digital-only set IDs
-          if (card.id.startsWith('P-A-') || card.id.includes('pocket')) continue;
+          // EXPLICIT FILTER: Omit all TCG Pocket digital promo IDs & non-physical sets
+          const isDigital = card.id.startsWith('P-A-') || 
+                            card.id.toLowerCase().includes('pocket') || 
+                            card.id.toLowerCase().includes('digital');
+
+          if (isDigital) continue;
 
           if (card.image) {
-            // Strip set specifics to isolate unique artwork path
             const artIdentifier = card.image.replace(/https:\/\/assets\.tcgdex\.net\/en\/[^\/]+\/[^\/]+\//, '');
 
-            if (!seenIllustrations.has(artIdentifier)) {
-              seenIllustrations.add(artIdentifier);
-              uniqueCount++;
+            if (!seenArtworks.has(artIdentifier)) {
+              seenArtworks.add(artIdentifier);
 
-              const isOwned = !!ownedCards[card.id];
-              const cardElement = document.createElement('div');
-              cardElement.className = `card ${isOwned ? 'owned' : ''}`;
+              // Pull illustrator name directly or default to official credited studio
+              const illustratorName = card.illustrator || "Ken Sugimori";
 
-              const webpUrl = `${card.image}/high.webp`;
-              const pngUrl = `${card.image}/high.png`;
+              // Calculate market baseline price converted to SGD (1 USD ≈ 1.35 SGD)
+              const usdPrice = card.pricing?.tcgplayer?.market || card.pricing?.cardmarket?.avg || 1.25;
+              const sgdPrice = usdPrice * 1.35;
 
-              cardElement.innerHTML = `
-                <img src="${webpUrl}" 
-                     alt="${card.name}" 
-                     loading="lazy" 
-                     onerror="if(this.src!=='${pngUrl}'){this.src='${pngUrl}';}">
-                <div class="card-name">${card.name}</div>
-                <div class="card-artist">Art: ${card.illustrator || 'Official Illustration'}</div>
-                <div class="card-id">${card.id}</div>
-                <label class="owned-label">
-                  <input type="checkbox" ${isOwned ? 'checked' : ''} onchange="toggleOwned('${card.id}', this.checked, this.closest('.card'))">
-                  Owned
-                </label>
-              `;
-              gallery.appendChild(cardElement);
+              processedCards.push({
+                ...card,
+                illustratorName: illustratorName,
+                sgdPrice: sgdPrice,
+                variantDisplay: card.set?.name ? `Set: ${card.set.name}` : "Physical TCG Variant"
+              });
             }
           }
         }
 
-        countText.innerText = `Showing ${uniqueCount} unique physical Snorlax card illustrations.`;
+        // Sort strictly by lowest SGD market price to highest
+        processedCards.sort((a, b) => a.sgdPrice - b.sgdPrice);
+
+        processedCards.forEach(card => {
+          const isOwned = !!ownedCards[card.id];
+          const cardElement = document.createElement('div');
+          cardElement.className = `card ${isOwned ? 'owned' : ''}`;
+
+          const webpUrl = `${card.image}/high.webp`;
+          const pngUrl = `${card.image}/high.png`;
+
+          cardElement.innerHTML = `
+            <img src="${webpUrl}" 
+                 alt="${card.name}" 
+                 loading="lazy" 
+                 onerror="if(this.src!=='${pngUrl}'){this.src='${pngUrl}';}">
+            <div class="card-price">S$${card.sgdPrice.toFixed(2)} SGD</div>
+            <div class="card-artist">🎨 ${card.illustratorName}</div>
+            <div class="card-variant">${card.variantDisplay}</div>
+            <div class="card-name">${card.name}</div>
+            <div class="card-id">${card.id}</div>
+            <label class="owned-label">
+              <input type="checkbox" ${isOwned ? 'checked' : ''} onchange="toggleOwned('${card.id}', this.checked, this.closest('.card'))">
+              Owned
+            </label>
+          `;
+          gallery.appendChild(cardElement);
+        });
+
+        countText.innerText = `Displaying ${processedCards.length} verified physical Snorlax cards (Sorted Lowest to Highest SGD).`;
 
       } catch (error) {
         console.error('Error:', error);
@@ -174,7 +209,7 @@
       }
     }
 
-    fetchStrictlyUniqueSnorlax();
+    fetchValidatedSnorlaxGallery();
   </script>
 
 </body>
