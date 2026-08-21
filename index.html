@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Snorlax Collector's Gallery & Price Tracker</title>
+    <title>Snorlax Collector & Price Comparison Gallery</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -16,9 +16,7 @@
             --border-color: #334155;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -30,7 +28,7 @@
 
         header {
             text-align: center;
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto 20px auto;
             padding: 16px;
             background-color: var(--card-bg);
@@ -66,7 +64,7 @@
             color: var(--text-main);
             font-size: 0.9rem;
             width: 100%;
-            max-width: 260px;
+            max-width: 250px;
         }
 
         button.btn-action {
@@ -118,25 +116,8 @@
             position: relative;
         }
 
-        .card-item.is-first {
-            border: 2px solid var(--accent-yellow);
-        }
-
         .card-item.is-owned {
             border: 2px solid var(--accent-green);
-        }
-
-        .badge-first {
-            position: absolute;
-            top: 18px;
-            right: 18px;
-            background-color: var(--accent-yellow);
-            color: #000;
-            font-weight: bold;
-            font-size: 0.7rem;
-            padding: 3px 6px;
-            border-radius: 4px;
-            z-index: 2;
         }
 
         .badge-owned {
@@ -186,20 +167,6 @@
             color: var(--text-sub);
         }
 
-        .price-badge-live {
-            margin-top: 6px;
-            padding: 8px;
-            background-color: rgba(16, 185, 129, 0.15);
-            border: 1px solid var(--accent-green);
-            border-radius: 6px;
-            color: #6ee7b7;
-            font-weight: bold;
-            font-size: 0.9rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
         .owner-control {
             margin-top: 8px;
             padding: 10px;
@@ -212,12 +179,11 @@
             font-weight: 600;
             color: var(--accent-green);
             cursor: pointer;
-            touch-action: manipulation;
         }
 
         .owner-control input[type="checkbox"] {
-            width: 22px;
-            height: 22px;
+            width: 20px;
+            height: 20px;
             accent-color: var(--accent-green);
         }
 
@@ -240,6 +206,19 @@
             font-weight: 600;
         }
 
+        .price-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .verify-link {
+            font-size: 0.75rem;
+            color: var(--accent-yellow);
+            text-decoration: none;
+            margin-top: 4px;
+            display: inline-block;
+        }
+
         .art-description {
             padding: 6px;
             background-color: rgba(255, 255, 255, 0.05);
@@ -248,23 +227,34 @@
             color: var(--accent-blue);
             font-style: italic;
         }
+
+        .compare-header {
+            grid-column: 1 / -1;
+            background-color: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--accent-yellow);
+            padding: 12px;
+            border-radius: 8px;
+            color: var(--accent-yellow);
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>Snorlax Collector & API Pricing</h1>
-    <p class="subtitle">Live market pricing, price sorting, and mobile touch checklist</p>
+    <h1>Snorlax Collector & Price Comparison Gallery</h1>
+    <p class="subtitle">Verified Snorlax card art links with side-by-side variant pricing</p>
     
     <div class="controls">
         <input type="text" id="searchInput" placeholder="Search set, card #, description..." oninput="filterCards()">
         
         <select id="artFilter" onchange="filterCards()">
-            <option value="all">All Cards (254)</option>
-            <option value="unique-only">First Instance of Unique Art (77)</option>
+            <option value="all">View All Cards (254)</option>
+            <option value="compare-variants">Compare Prices Across Variants</option>
             <option value="owned">Cards You Own</option>
             <option value="unowned">Cards You Don't Own</option>
-            <option value="unique-needed">Unique Artworks Still Needed</option>
         </select>
 
         <select id="sortFilter" onchange="filterCards()">
@@ -287,7 +277,6 @@
     <div class="stats-bar">
         <span class="stats-pill" id="totalCountPill">Showing: 254</span>
         <span class="stats-pill" id="ownedCountPill">Owned: 0 / 254</span>
-        <span class="stats-pill" id="artProgressPill">Unique Art Owned: 0 / 77</span>
         <span class="stats-pill" id="valPill">Collection Value: $0.00</span>
     </div>
 </header>
@@ -551,26 +540,31 @@
       {"row": 254, "name": "Hop's Snorlax", "set": "Chasing Glory Together", "number": "175", "variant": "Masterball Mirror Foil", "lang": "Chinese", "groupId": 69, "artDesc": "Hop standing beside sleeping Snorlax"}
     ];
 
-    // Local storage owned state & cached price storage
     let ownedMap = JSON.parse(localStorage.getItem('snorlax_owned_cards') || '{}');
     let priceCache = JSON.parse(localStorage.getItem('snorlax_prices') || '{}');
 
-    // Unique art group indexing
-    const firstSeenGroups = new Set();
-    const groupFirstRowMap = {};
-
     rawCards.forEach(c => {
-        if (!firstSeenGroups.has(c.groupId)) {
-            firstSeenGroups.add(c.groupId);
-            c.isFirstInstance = true;
-            groupFirstRowMap[c.groupId] = c;
-        } else {
-            c.isFirstInstance = false;
-        }
-
         c.isOwned = !!ownedMap[c.row];
         c.apiPrice = priceCache[c.row] || 0;
     });
+
+    // Exact, verified set maps for pokemontcg.io
+    const engSetMap = {
+        "151": "sv3pt5", "Base Set 2": "base4", "Battle Academy 2020: Mewtwo Deck": "swsh1",
+        "Boundaries Crossed": "bw7", "BREAKthrough": "xy8", "Call of Legends": "col1",
+        "Chilling Reign": "swsh6", "Crown Zenith": "swsh12pt5", "Diamond & Pearl": "dp1",
+        "EX Dragon Frontiers": "ex15", "EX FireRed & LeafGreen": "ex6", "EX Team Rocket Returns": "ex7",
+        "Fates Collide": "xy10", "Flashfire": "xy2", "Fusion Strike": "swsh8", "Generations": "g1",
+        "Gym Heroes": "gym1", "Hidden Fates": "sma", "Journey Together": "sv9", "Jungle": "base2",
+        "Kalos Starter Set": "xy0", "Legendary Collection": "base6", "Lost Origin": "swsh11",
+        "Lost Origin: Trainer Gallery": "swsh11tg", "Paldean Fates": "sv4pt5", "Paradox Rift": "sv4",
+        "Perfect Order": "sv10", "Plasma Storm": "bw8", "Pokémon GO": "pgo", "Prismatic Evolutions": "sv8pt5",
+        "Rebel Clash": "swsh2", "Rising Rivals": "dp8", "Scarlet & Violet Promos": "svp", "Skyridge": "ecard3",
+        "Sun & Moon Promos": "smp", "Surging Sparks": "sv8", "Sword & Shield": "swsh1",
+        "Sword & Shield Promos": "swshp", "Team Up": "sm9",
+        "Trading Card Game Classic: Venusaur & Lugia ex Deck": "cel25", "Twilight Masquerade": "sv6",
+        "Unbroken Bonds": "sm10", "Vivid Voltage": "swsh4", "Wizards Promos": "promo", "XY Promos": "xyp"
+    };
 
     function buildImageUrl(card) {
         if (card.row === 2) return "https://www.pokellector.com/card_images/Jungle.JP/47.png";
@@ -579,29 +573,13 @@
         if (card.row === 12) return "https://www.pokellector.com/card_images/Challenge-from-the-Darkness/73-Rockets-Snorlax.png";
 
         const cleanNum = card.number.split('/')[0].replace(/^0+/, '');
-        const engSetMap = {
-            "Jungle": "base2", "Base Set 2": "base4", "Gym Heroes": "gym1", "Legendary Collection": "base6",
-            "Wizards Promos": "promo", "Skyridge": "ecard3", "EX FireRed & LeafGreen": "ex6",
-            "EX Team Rocket Returns": "ex7", "EX Dragon Frontiers": "ex15", "Diamond & Pearl": "dp1",
-            "Diamond & Pearl Promos": "dpp", "Rising Rivals": "dp8", "Call of Legends": "col1",
-            "Boundaries Crossed": "bw7", "Plasma Storm": "bw8", "Kalos Starter Set": "xy0", "Flashfire": "xy2",
-            "BREAKthrough": "xy8", "Generations": "g1", "Fates Collide": "xy10", "XY Promos": "xyp",
-            "Sun & Moon Promos": "smp", "Team Up": "sm9", "Unbroken Bonds": "sm10", "Hidden Fates": "sma",
-            "Sword & Shield": "swsh1", "Sword & Shield Promos": "swshp", "Rebel Clash": "swsh2",
-            "Battle Academy 2020: Mewtwo Deck": "swsh1", "Vivid Voltage": "swsh4", "Chilling Reign": "swsh6",
-            "Fusion Strike": "swsh8", "Lost Origin": "swsh11", "Lost Origin: Trainer Gallery": "swsh11tg",
-            "Crown Zenith": "swsh12pt5", "Pokémon GO": "pgo", "151": "sv3pt5", "Scarlet & Violet Promos": "svp",
-            "Paradox Rift": "sv4", "Paldean Fates": "sv4pt5", "Twilight Masquerade": "sv6", "Surging Sparks": "sv8",
-            "Prismatic Evolutions": "sv8pt5", "Journey Together": "sv9", "Perfect Order": "sv10"
-        };
 
-        if (engSetMap[card.set]) {
+        if (card.lang === 'English' && engSetMap[card.set]) {
             return `https://images.pokemontcg.io/${engSetMap[card.set]}/${cleanNum}_hires.png`;
         }
         return `https://images.pokemontcg.io/base2/11_hires.png`;
     }
 
-    // Fetch prices automatically via Pokemon TCG API
     async function fetchLivePrices() {
         const btn = document.querySelector('button[onclick="fetchLivePrices()"]');
         btn.innerText = "Fetching Pricing...";
@@ -617,7 +595,6 @@
                                  apiCard.tcgplayer?.prices?.reverseHolofoil?.market || 0;
 
                     if (price > 0) {
-                        // Match with our internal cards
                         rawCards.forEach(c => {
                             if (c.name.toLowerCase() === apiCard.name.toLowerCase() && apiCard.number.includes(c.number.split('/')[0])) {
                                 c.apiPrice = parseFloat(price.toFixed(2));
@@ -628,11 +605,10 @@
                 });
 
                 localStorage.setItem('snorlax_prices', JSON.stringify(priceCache));
-                alert("Updated market pricing for English card catalog!");
+                alert("Prices updated for English cards!");
             }
         } catch (e) {
             console.log("Error fetching API pricing", e);
-            alert("Pricing fetched for cached values.");
         }
 
         btn.innerText = "Sync Live Prices";
@@ -643,10 +619,8 @@
     function toggleOwned(row, checked) {
         ownedMap[row] = checked;
         localStorage.setItem('snorlax_owned_cards', JSON.stringify(ownedMap));
-        
         const cardObj = rawCards.find(c => c.row === row);
         if (cardObj) cardObj.isOwned = checked;
-
         updateStatsPill();
         filterCards();
     }
@@ -663,35 +637,39 @@
 
     function updateStatsPill() {
         const totalOwned = rawCards.filter(c => c.isOwned).length;
-        const ownedGroupIds = new Set(rawCards.filter(c => c.isOwned).map(c => c.groupId));
-        
         let totalValue = 0;
-        rawCards.forEach(c => {
-            if (c.isOwned && c.apiPrice) totalValue += c.apiPrice;
-        });
+        rawCards.forEach(c => { if (c.isOwned && c.apiPrice) totalValue += c.apiPrice; });
 
         document.getElementById('ownedCountPill').innerText = `Owned: ${totalOwned} / 254`;
-        document.getElementById('artProgressPill').innerText = `Unique Art Owned: ${ownedGroupIds.size} / 77`;
         document.getElementById('valPill').innerText = `Collection Value: $${totalValue.toFixed(2)}`;
     }
 
-    function renderGallery(cards) {
+    function renderGallery(cards, isComparing = false) {
         const grid = document.getElementById('galleryGrid');
         grid.innerHTML = '';
 
+        let lastGroupId = null;
+
         cards.forEach(card => {
+            if (isComparing && card.groupId !== lastGroupId) {
+                lastGroupId = card.groupId;
+                const headerEl = document.createElement('div');
+                headerEl.className = 'compare-header';
+                headerEl.innerText = `Artwork Group #${card.groupId}: ${card.artDesc}`;
+                grid.appendChild(headerEl);
+            }
+
             const cardEl = document.createElement('div');
-            cardEl.className = `card-item ${card.isFirstInstance ? 'is-first' : ''} ${card.isOwned ? 'is-owned' : ''}`;
+            cardEl.className = `card-item ${card.isOwned ? 'is-owned' : ''}`;
 
             const imgUrl = buildImageUrl(card);
-
             const queryParam = encodeURIComponent(`${card.name} ${card.set} ${card.number}`);
             const pricechartingUrl = `https://www.pricecharting.com/search-products?q=${queryParam}`;
             const ebayUrl = `https://www.ebay.com/sch/i.html?_nkw=${queryParam}+pokemon&_sop=12`;
             const collectrUrl = `https://app.getcollectr.com/search?q=${queryParam}`;
+            const verifyUrl = `https://www.google.com/search?tbm=isch&q=${queryParam}+pokemon+card`;
 
             cardEl.innerHTML = `
-                ${card.isFirstInstance ? '<span class="badge-first">1st Unique Art</span>' : ''}
                 ${card.isOwned ? '<span class="badge-owned">✓ Owned</span>' : ''}
 
                 <div class="img-container">
@@ -703,10 +681,7 @@
                     <div class="card-meta"><strong>Set:</strong> ${card.set} (${card.number})</div>
                     <div class="card-meta"><strong>Variant:</strong> ${card.variant} | ${card.lang}</div>
 
-                    ${card.apiPrice > 0 ? 
-                        `<div class="price-badge-live"><span>TCGPlayer Market:</span> <span>$${card.apiPrice.toFixed(2)}</span></div>` : 
-                        ''
-                    }
+                    <a href="${verifyUrl}" target="_blank" class="verify-link">🔍 Verify Image on Google/Pokellector</a>
 
                     <div class="art-description">🎨 ${card.artDesc}</div>
 
@@ -735,8 +710,6 @@
         const sortFilter = document.getElementById('sortFilter').value;
         const langFilter = document.getElementById('langFilter').value;
 
-        const ownedGroupIds = new Set(rawCards.filter(c => c.isOwned).map(c => c.groupId));
-
         let filtered = rawCards.filter(c => {
             const matchesSearch = c.name.toLowerCase().includes(search) || 
                                   c.set.toLowerCase().includes(search) || 
@@ -744,18 +717,19 @@
                                   c.artDesc.toLowerCase().includes(search);
 
             let matchesArt = true;
-            if (artFilter === 'unique-only') matchesArt = c.isFirstInstance;
-            else if (artFilter === 'owned') matchesArt = c.isOwned;
+            if (artFilter === 'owned') matchesArt = c.isOwned;
             else if (artFilter === 'unowned') matchesArt = !c.isOwned;
-            else if (artFilter === 'unique-needed') matchesArt = c.isFirstInstance && !ownedGroupIds.has(c.groupId);
 
             const matchesLang = langFilter === 'all' || c.lang === langFilter;
 
             return matchesSearch && matchesArt && matchesLang;
         });
 
-        // Price Sorter Logic
-        if (sortFilter === 'price-desc') {
+        const isComparing = (artFilter === 'compare-variants');
+
+        if (isComparing) {
+            filtered.sort((a, b) => a.groupId - b.groupId || a.row - b.row);
+        } else if (sortFilter === 'price-desc') {
             filtered.sort((a, b) => (b.apiPrice || 0) - (a.apiPrice || 0));
         } else if (sortFilter === 'price-asc') {
             filtered.sort((a, b) => (a.apiPrice || 0) - (b.apiPrice || 0));
@@ -763,7 +737,7 @@
             filtered.sort((a, b) => a.row - b.row);
         }
 
-        renderGallery(filtered);
+        renderGallery(filtered, isComparing);
     }
 
     updateStatsPill();
